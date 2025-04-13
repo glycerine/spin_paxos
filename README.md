@@ -179,10 +179,9 @@ Also, don't let the 5 delays put you off. This
 is just the baseline "classic" version. In
 the typical optimizations (like running
 multiple rounds (multi-paxos) where phase 1 does not
-need to be repeated after electing a leader;
-and/or using leases; combining learners and acceptors
-into the same node),
-these delays are reduced substantially 
+need to be repeated after electing a leader for
+a given epoch; and/or using leases; combining learners and acceptors
+into the same node), these delays are reduced substantially 
 or even eliminated all together.
 
 ![paxos overview](paxos_overview.png)

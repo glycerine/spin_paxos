@@ -265,13 +265,17 @@ you know _why_ it was considered hard to understand
 if you start with 1) or 2) above, you'll be fine.
 
 If in doubt, read the unopt.pml model file. It
-gives you a single round of Paxos (one Synod
+gives you exact, precise code (not ambiguous English!)
+for a single round of Paxos (one Synod
 iteration) in about 200 lines, including comments.
-You can make changes (like setting MAJORITY
+
+More importantly, you yourself can make changes (like setting MAJORITY
 to 1 instead of 2, for 3 acceptors) and then re-run 
 the model checker to see the path to the 
 correctness violation (not all nodes agree
-on the chosen value).
+on the chosen value) very quickly. The importance
+of doing this yourself, in a hands-on experiment,
+cannot be overstated.
 
 Note: the years of publications may seem confusing.
 Lamport also originally published Paxos as a DEC technical

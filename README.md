@@ -113,7 +113,9 @@ the difference between `<` and `<=` in mind.
 
 Also, don't let the 5 delays put you off. This
 is just the baseline "classic" version. In
-the typical optimizations (like electing a leader,
+the typical optimizations (like running
+multiple rounds (multi-paxos) where phase 1 does not
+need to be repeated after electing a leader;
 and/or using leases), these delays are reduced
 substantially or even eliminated all together.
 

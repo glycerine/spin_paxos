@@ -104,7 +104,8 @@ value for this write, in place of the one they originally
 had in mind -- and they still use the original ballot number
 that they had proposed/gotten promises back for.
 
-(Technically, the Proposer has to substitute the value with the _highest_ 
+I generalized a little too much just there.
+Technically, the Proposer has to substitute the value with the _highest_ 
 number of all accepted/committed values seen by Acceptors, 
 but the subtle point worth emphasizing is that the first phase -- of 
 the three phases involved in Paxos -- is mostly about

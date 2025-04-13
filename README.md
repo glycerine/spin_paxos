@@ -21,7 +21,9 @@ last 11 years, and so I've updated the model files
 in small ways to get them to compile, and fixed all
 issues that resulted from the update.
 
-Also there was a minor mistake in the first/unoptimized version
+Per the CC-BY license requiring annotation of changes:
+
+There was a minor mistake in the first/unoptimized version
 of `rec_p()` using `if :: (prnd>rnd)` and `(prnd <=rnd) −> printf("\nSKIP ")`.
 The first `if` test should be `prnd>=rnd` and the second `prnd < rnd`.
 
@@ -45,11 +47,26 @@ The (corrected) unoptimized model is in [unopt.pml](unopt.pml).
 
 The optimized model is in [optimized.pml](optimized.pml).
 
+A second correction was applied in the acceptor_optimized() process of the optimized.pml file
+[line 193 was missing in the original second/optimized acceptor() proctype](
+https://github.com/glycerine/spin_paxos/blob/master/optimized.pml#L193)
+The optimized version shown in the published paper 
+stalls and completes no rounds without this correction,
+as the acceptor does not reply with any phase 1 promise message.
+
+checking the model with spin
+------------------
+
 The included makefile shows how to do a model-checking run
-on each of these. The optimized model is much faster,
+on each of these (just type `make` for the optimized; `make unopt`
+for the unoptimized model). The optimized model is much faster,
 about 2 seconds, versus ~60 seconds for unopt.
 
-Some good introductions to Paxos:
+Spin is a great, old-school unix style C program that
+installs easily using the instructions from https://spinroot.com/
+
+Some good introductions to Paxos
+--------------------------------
 
 1. CASPaxos: Replicated State Machines without logs, by Denis Rystsov.
 

@@ -18,8 +18,8 @@
 
 typedef mex{
   byte rnd;   // ballot
-  short prnd; // previously commited ballot
-  short pval; // previously commited value
+  short prnd; // previously accepted or commited ballot (highest such number)
+  short pval; // previously accepted or commited value
 }
 
 chan prepare = [MAX] of {byte, byte};

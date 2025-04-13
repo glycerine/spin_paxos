@@ -22,8 +22,8 @@ in small ways to get them to compile, and fixed all
 issues that resulted from the update.
 
 Also there was a minor mistake in the first/unoptimized version
-of `rec_p()` using `if :: (prnd>rnd)` and `(prnd <=rnd) −> printf("\nSKIP ");`;
-the first `if` test should be `prnd>=rnd` and the second `prnd < rnd`.
+of `rec_p()` using `if :: (prnd>rnd)` and `(prnd <=rnd) −> printf("\nSKIP ")`.
+The first `if` test should be `prnd>=rnd` and the second `prnd < rnd`.
 
 This has been corrected, and clearer names applied, in
 unopt.pml's `recv_prepare_at_acceptor()`

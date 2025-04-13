@@ -205,8 +205,8 @@ model for single-round Paxos, one of the most
 useful and important of all distributed systems algorithms. 
 
 While doing so, the authors also give us a master class 
-in how to optimize Promela models and minimize
-a models state space.
+in how to optimize Promela models by minimizing
+a model's state space.
 
 Paper: "Model Checking Paxos in Spin"
 ====================

@@ -10,7 +10,7 @@ all: # optimized version
 	@(! test -f optimized.pml.trail || (./pan -r optimized.pml.trail ; false))
 	@grep "Warning:\ Search\ not\ completed" log.pan || echo "good: search was completed."
 
-unopt: # un-optimized version (see 'all', below, for much faster version)
+unopt: # un-optimized version (see 'all', above, for much faster version)
 	rm -f pan pan.c pan.b pan.h pan.m pan.p pan.t unopt.pml.trail log.pan
 	spin -a unopt.pml
 	##gcc -O2 -DSAFETY -DREACH -o pan pan.c

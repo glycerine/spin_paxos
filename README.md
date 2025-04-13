@@ -122,7 +122,7 @@ References for the EPaxos bug:
 https://arxiv.org/abs/1906.10917
 https://github.com/otrack/on-epaxos-correctness
 
-Epaxos original:
+EPaxos original:
 
 "There Is More Consensus in Egalitarian Parliaments" by
 Iulian Moraru, David G. Andersen, Michael Kaminsky, 2013.

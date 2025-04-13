@@ -90,9 +90,9 @@ So the problem was not _within_ a single
 round of EPaxos, but _between_ then multiple
 rounds; a classic location for bugs to creep
 in! (and something this spin_paxos repository could to 
-be extended to check... but only check/start with 
-the simplest building block; there is not (yet)
-and "multiple rounds" of Paxos here).
+be extended to check... but at the moment we
+only provided the simplest, most basic, building block.
+There are not (yet anyway) any "multiple rounds" of Paxos here.
 
 References for the EPaxos bug:
 

@@ -84,9 +84,22 @@ you know _why_ it was considered hard to understand
 (and to this day, maintains that reputation), but
 if you start with 1) or 2) above, you'll be fine.
 
+If in doubt, read the unopt.pml model file. It
+gives you a single round of Paxos (one Synod
+iteration) in less than 190 lines, including comments.
+You can make changes (like setting MAJORITY
+to 1 instead of 2, for 3 acceptors) and then re-run 
+the model checker to see the path to the 
+correctness violation (not all nodes agree
+on the chosen value).
+
 ------------
 
-repository owner: Jason E. Aten, Ph.D.
+Repository owner: Jason E. Aten, Ph.D.
+
+My contributions are copyright (c) 2025, by Jason E. Aten, Ph.D.
+
+License: Creative Commons Attribution License, per the paper below.
 
 ------------
 

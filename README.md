@@ -79,6 +79,21 @@ EPaxos (Moraru 2013) turned out to have a mistake (Sutra 2019) in its
 author's published implementation code and TLA+ model, 
 something noted six years after publication.
 
+Sutra writes, "This paper identifies a problem 
+in both the TLA+ specification and the 
+implementation of the Egalitarian Paxos protocol. 
+It is related to how replicas switch 
+from one ballot to another when computing 
+the dependencies of a command."
+
+So the problem was not _within_ a single
+round of EPaxos, but _between_ then multiple
+rounds; a classic location for bugs to creep
+in! (and something this spin_paxos repository could to 
+be extended to check... but only check/start with 
+the simplest building block; there is not (yet)
+and "multiple rounds" of Paxos here).
+
 References for the EPaxos bug:
 
 "On the correctness of Egalitarian Paxos" by Pierre Sutra, 2019.

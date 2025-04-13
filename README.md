@@ -107,7 +107,7 @@ that they had proposed/gotten promises back for.
 (I generalized a little too much just there.
 Technically, the Proposer has to substitute the value with the _highest_ 
 number of all accepted/committed values seen by Acceptors, 
-but the subtle point worth emphasizing is that the first phase -- of 
+but the perhaps non-obvious point worth emphasizing is that the first phase -- of 
 the three phases involved in Paxos -- is mostly about
 _recovery_ ; the other part about promising to ignore
 lower values in the future is also critical for correctness,

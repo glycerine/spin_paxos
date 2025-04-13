@@ -230,7 +230,8 @@ multiple iterations of the Synod protocol described
 above and in our Promela files),
 and the time-outs required when messages might be lost. 
 Lamport sketches how multi-paxos works
-to do full Replicated State Machines in Paxos Made Simple, 
+to do full State Machine Replication (SMR) in 
+the "Paxos Made Simple" paper, 
 but the details are fully fleshed out and proven here. This is the
 first place where the term Multi-Paxos is used, as far
 as I can tell.

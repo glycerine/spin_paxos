@@ -75,7 +75,7 @@ In a epic design choice that I admire deeply, Spin
 works by generating a C source code file from 
 your .pml (.p) Promela file. This output file is
 called pan.c, and you then compile pan.c to just
-`pan`, and then run then `./pan` executable
+`pan`, and run the `./pan` executable
 to check your model.
 
 All this is just to say, you are going to need

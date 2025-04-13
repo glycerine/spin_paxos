@@ -73,8 +73,8 @@ that they had proposed/gotten promises back for.
 
 (Technically, the Proposer has to substitute the value with the _highest_ 
 number of all accepted/committed values seen by Acceptors, 
-but the subtle point worth emphasizing is that the first round -- of 
-the three rounds involved in Paxos -- is all about
+but the subtle point worth emphasizing is that the first phase -- of 
+the three phases involved in Paxos -- is all about
 _recovery_.) Recovering from previous faults correctly
 must involve dropping (or delaying) a value you want to 
 write in favor of recovering a previously partially-committed 

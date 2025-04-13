@@ -1,6 +1,8 @@
 spin_paxos
 ==========
 
+(Paxos in a single slide)[paxos_single_slide.png]
+
 This repository contains extracted and updated
 Promela models (for running on the Spin model
 checker https://spinroot.com/ ) from the

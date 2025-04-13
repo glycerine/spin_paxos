@@ -12,7 +12,7 @@
 // That work was Copyright(C) 2014 by these authors, and
 // licensed under the Creative Commons Attribution License (CC-BY).
 //
-/  * ...and then heavily altered, updated, and fixed
+//  * ...and then heavily altered, updated, and fixed
 // * to the point where it is only distantly similar/might not
 // * even be recognizable from the originally presented form.
 //

@@ -302,8 +302,8 @@ until it isn't!), Raft was a brilliant
 stroke, and sorely needed. Locking 
 down an exact algorithm with an precise set 
 of choices that could eventually be proven
-correct was a massive boon to software engineers
-everywhere.
+correct was a massive boon to the software engineering
+community.
 
 As a counter-point though, "Enough with all the Raft", 
 https://transactional.blog/talk/enough-with-all-the-raft

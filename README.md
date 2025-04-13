@@ -51,13 +51,22 @@ is a _great_ idea for learning the essentials first.
 
 https://lamport.azurewebsites.net/pubs/paxos-simple.pdf
 
-Notes: This is the paper Lamport wrote that does _not_
+Notes: This is the 2nd paper Lamport wrote about Paxos,
+the one that does _not_
 use an elaborate conceit about an ancient Greek parliament.
 It is very clear, and you should not be afraid to read
 it for an authoritative and correct presentation 
 of the algorithm. Many other summaries that I've read
 get subtle details wrong, actually. So stick with
 Lamport's simple and clear description.
+
+Really the only tricky, subtle, part is: the Proposer can
+have a value in mind they want to write, but if
+even one Acceptor in the quorum comes back with an already committed
+value, the propser must SUBSTITUTE the returned, already
+committed value, in place of the one they originally
+had in mind -- and they still use the original ballot number
+that they had proposed/gotten promises back for.
 
 3. "Revisiting The Paxos Algorithm" by Roberto De Prisco,
 Masters Thesis, MIT, 1997.

@@ -80,8 +80,10 @@ vanilla Paxos, you will not get safety or linearizability.
 That said, omitting logs from the discussion to start with 
 is a _great_ idea for learning the essentials first.
 
-(Also, ignore his group membership change protocol, there
-are more scalable approaches.)
+Also, ignore Rystsov's group membership change protocol, there
+are more scalable approaches than doing changes one-by-one. 
+In fact, Lamport himself describes one such in the most 
+important paper in this list, which I describe next.
 
 2. Paxos Made Simple, by Leslie Lamport. 2001.
 

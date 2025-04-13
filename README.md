@@ -109,7 +109,7 @@ correctness of the resulting algorithm has
 not been established yet."
 
 So the problem was not _within_ a single
-round of EPaxos, but _between_ then multiple
+round of EPaxos, but _between_ the multiple
 rounds; a classic location for bugs to creep
 in! (and something this spin_paxos repository could to 
 be extended to check... but at the moment we

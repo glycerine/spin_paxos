@@ -303,7 +303,9 @@ stroke, and sorely needed. Locking
 down an exact algorithm with an precise set 
 of choices that could eventually be proven
 correct was a massive boon to the software engineering
-community.
+community. For more on this thesis and a deep comparison
+of Paxos and Raft, see https://arxiv.org/abs/2004.05074 
+"Paxos vs Raft", by Heidi Howard and Richard Mortier, 2020.
 
 As a counter-point though, "Enough with all the Raft", 
 https://transactional.blog/talk/enough-with-all-the-raft

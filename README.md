@@ -79,6 +79,10 @@ _recovery_.) Recovering from previous faults correctly
 must involve dropping (or delaying) a value you want to 
 write in favor of recovering a previously partially-committed value.
 
+![paxos overview](paxos_overview.png)
+
+Overview of Paxos From https://arxiv.org/pdf/1703.08905 "WPaxos: Wide Area Network Flexible Consensus" by Ailijiang et al. 2019. Figure 1, page 2.
+
 3. "Revisiting The Paxos Algorithm" by Roberto De Prisco,
 Masters Thesis, MIT, 1997.
 

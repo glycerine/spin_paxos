@@ -16,6 +16,11 @@ https://arxiv.org/pdf/1408.5962
 
 and below in markdown.
 
+This paper was a great help to me in learning Promela.
+
+Delzanno et al give us a master class in how to 
+optimize Promela models by minimizing its state space.
+
 The Promela language evolved a little in the
 last 11 years, and so I've updated the model files
 in small ways to get them to compile, and fixed all
@@ -39,13 +44,14 @@ and
 ~~~
 
 The pdf linked above and the code shown in the markdown
-version below reflects the original,
-not-updated, Promela code. The updated
-code is in these two files in this repo:
+version below give the original, as published,
+Promela code. 
+
+The updated and corrected code is in this repo. See these two files:
 
 The (corrected) unoptimized model is in [unopt.pml](unopt.pml).
 
-The optimized model is in [optimized.pml](optimized.pml).
+The (corrected) optimized model is in [optimized.pml](optimized.pml).
 
 A second correction was applied in the acceptor_optimized() process of the optimized.pml file
 [line 193 was missing in the original second/optimized acceptor() proctype](

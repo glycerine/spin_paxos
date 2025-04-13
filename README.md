@@ -248,7 +248,7 @@ Paper: "Model Checking Paxos in Spin"
 
 https://arxiv.org/pdf/1408.5962
 
-(local backup: model_checking_paxos_in_spin.pdf )
+local backup: [model_checking_paxos_in_spin.pdf](model_checking_paxos_in_spin.pdf)
 
 Authors:
 

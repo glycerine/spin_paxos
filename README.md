@@ -113,7 +113,9 @@ _recovery_ ; the other part about promising to ignore
 lower values in the future is also critical for correctness,
 of course, and why logging is non-optional, but I'll leave 
 the rationale for that a fun little mystery for you
-to discover). Recovering from previous faults correctly
+to discover; hint: it is at the heart of the correctness proof,
+but what mistake does it prevent?). 
+To sum up phase-one emphatically, recovering from previous faults correctly
 must involve dropping (or delaying) a value you want to 
 write in favor of recovering a previously partially-committed 
 (accepted) value.

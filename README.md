@@ -303,9 +303,16 @@ The authors provide a realistic and tractable
 model for single-round Paxos, one of the most
 useful and important of all distributed systems algorithms. 
 
-While doing so, the authors also give us a master class 
+While doing so, they give us a master class 
 in how to optimize Promela models by minimizing
-a model's state space.
+state space. They exploit details of Spin's
+implementation that I have not seen discussed
+elsewhere (see below). The results speak
+for themselves: optimized model checking one
+round of three proposers and three acceptors
+finishes in about 2 seconds on my computer.
+Compared to TLA+ models that take days check
+(if they ever finish!), this was a revelation.
 
 Paper: "Model Checking Paxos in Spin"
 ====================

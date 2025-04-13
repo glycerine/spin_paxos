@@ -71,7 +71,7 @@ about 2 seconds, versus ~60 seconds for unopt.
 Spin is a great, old-school unix style C program that
 installs easily using the instructions from https://spinroot.com/
 
-In a epic design choice that I admire deeply, Spin
+In an epic design choice that I admire deeply, Spin
 works by generating a C source code file from 
 your .pml (.p) Promela file. This output file is
 called pan.c, and you then compile pan.c to just

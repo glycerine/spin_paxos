@@ -103,11 +103,19 @@ paper on a paxos variant (there are dozens).
 You can see immediately that Paxos is
 really similar to the the classic two-phase commit
 protocol for distributed database transactions.
-In fact, that is all Paxos is, really: two
-phase commit plus a few small tweaks of adjustment
-to enable fault tolerance. It's the correctness proof
-part that is really the harder part; that and keeping 
+In fact, that is all Paxos is, really: 
+a new "prepare" phase, followed by a two-phase
+phase commit that yields a three-phase (5 message
+delays) protocol that is fault-tolerant.
+It's the correctness proof part that is really 
+the harder part; that and keeping 
 the difference between `<` and `<=` in mind.
+
+Also, don't let the 5 delays put you off. This
+is just the baseline "classic" version. In
+the typical optimizations (like electing a leader,
+and/or using leases), these delays are reduced
+substantially or even eliminated all together.
 
 ![paxos overview](paxos_overview.png)
 

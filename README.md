@@ -98,6 +98,17 @@ of the algorithm. Many other summaries that I've read
 get subtle details wrong, actually. So stick with
 Lamport's simple and clear description.
 
+Here is a nice summary diagram from a more recent
+paper on a paxos variant (there are dozens). 
+You can see immediately that Paxos is
+really similar to the the classic two-phase commit
+protocol for distributed database transactions.
+In fact, that is all Paxos is, really: two
+phase commit plus a few small tweaks of adjustment
+to enable fault tolerance. It's the correctness proof
+part that is really the harder part; that and keeping 
+the difference between `<` and `<=` in mind.
+
 ![paxos overview](paxos_overview.png)
 
 Overview of Paxos From https://arxiv.org/pdf/1703.08905 "WPaxos: Wide Area Network Flexible Consensus" by Ailijiang et al. 2019. Figure 1, page 2.

@@ -298,7 +298,7 @@ Given how much wiggle room there is for
 variations and optimizations (instrinsic, of course
 to the algorithm being fault tolerant is that
 it is also very change tolerant; that is,
-until it isn't(!)), Raft was a brilliant
+until it isn't!), Raft was a brilliant
 stroke, and sorely needed. Locking 
 down an exact algorithm with an precise set 
 of choices that could eventually be proven

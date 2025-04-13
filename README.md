@@ -300,7 +300,7 @@ to the algorithm being fault tolerant is that
 it is also very change tolerant; that is,
 until it isn't!), Raft was a brilliant
 stroke, and sorely needed. Locking 
-down an exact algorithm with an precise set 
+down an exact algorithm with a precise set 
 of choices that could eventually be proven
 correct was a massive boon to the software engineering
 community. For more on this thesis and a deep comparison

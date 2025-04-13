@@ -199,7 +199,14 @@ License: Creative Commons Attribution License, per the paper below.
 
 ------------
 
-The paper, translated into markdown, follows:
+The paper, translated into markdown, follows. 
+The authors provide a realistic and tractable 
+model for single-round Paxos, one of the most
+useful and important of all distributed systems algorithms. 
+
+While doing so, the authors also give us a master class 
+in how to optimize Promela models and minimize
+a models state space.
 
 Paper: "Model Checking Paxos in Spin"
 ====================

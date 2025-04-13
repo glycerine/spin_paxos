@@ -52,8 +52,8 @@ use an elaborate conceit about an ancient Greek parliament.
 It is very clear, and you should not be afraid to read
 it for an authoritative and correct presentation 
 of the algorithm. Many other summaries that I've read
-get subtle details wrong, actually. So stick with the
-original, here.
+get subtle details wrong, actually. So stick with
+Lamport's simple and clear description.
 
 3. "Revisiting The Paxos Algorithm" by Roberto De Prisco,
 Masters Thesis, MIT, 1997.
@@ -92,6 +92,28 @@ to 1 instead of 2, for 3 acceptors) and then re-run
 the model checker to see the path to the 
 correctness violation (not all nodes agree
 on the chosen value).
+
+Note: the years of publications may seem confusing.
+Lamport also originally published Paxos as a DEC technical
+report in 1989, in the Greek story form. The
+editors of the submitted journal version refused
+to publish it for some (eight??) years. Meanwhile
+Butler Lampson popularized it by giving talks
+on Paxos and explaining it's value. Lamport of course
+went on to win the Turing Award in 2013 for his
+body of work.
+
+After you understand Paxos, you'll probably view
+Raft as just another Paxos algorithm variant, albeit one
+tightly specified, leaving little room
+for ambiguity or discretion in implementation.
+
+"Enough with all the Raft", 
+https://transactional.blog/talk/enough-with-all-the-raft
+is a great 10 minute talk from Alex Miller (Google, FoundationDB)
+that got me thinking about these distinctions.
+His recommendation of CAS-Paxos as a good "weekend project"
+place to start is one I'm repeating here.
 
 ------------
 

@@ -279,7 +279,7 @@ for ambiguity or discretion in implementation.
 
 "Enough with all the Raft", 
 https://transactional.blog/talk/enough-with-all-the-raft
-is a great 10 minute talk from Alex Miller (Google, FoundationDB)
+is a great, recent, 10 minute talk from Alex Miller (Google, FoundationDB)
 that got me thinking about these distinctions. He
 makes a reasonable case that Raft is a mediocre,
 but safe, choice; if you understand your problem

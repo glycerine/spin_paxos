@@ -291,12 +291,22 @@ After you understand Paxos, you'll probably view
 Raft as just another Paxos algorithm variant, albeit one
 tightly specified, leaving little room
 for ambiguity or discretion in implementation.
+Given how much wiggle room there is for 
+variations and optimizations (instrinsic, of course
+to the algorithm being fault tolerant is that
+it is also very change tolerant; that is,
+until it isn't(!)), Raft was a brilliant
+stroke, and sorely needed. Locking 
+down an exact algorithm with an precise set 
+of choices that could eventually be proven
+correct was a massive boon to the open source community.
 
-"Enough with all the Raft", 
+As a counter-point though, "Enough with all the Raft", 
 https://transactional.blog/talk/enough-with-all-the-raft
 is a great, recent, 10 minute talk from Alex Miller (Google, FoundationDB)
-that got me thinking about these distinctions. He
-makes a reasonable case that Raft is a mediocre,
+that got me thinking about Raft versus other
+Paxos configurations. He makes a reasonable case 
+that Raft is often a mediocre,
 but safe, choice; if you understand your problem
 space and the trade-offs involved, you can
 make better choices when they are available.

@@ -14,7 +14,7 @@ last 11 years, and so I've updated the models
 in small ways, and fixed a couple
 of bugs that needed fixing. The pdf linked
 above and the code shown in the markdown
-version in papers reflects the original,
+version in the papers/ directory reflects the original,
 not-updated Promela code. The updated
 code is in these two files:
 
@@ -24,5 +24,6 @@ The optimized model is in optimized.pml.
 
 The included makefile shows how to do a model-checking run.
 
---
+------------
+
 repository owner: Jason E. Aten, Ph.D.

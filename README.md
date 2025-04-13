@@ -77,7 +77,8 @@ but the subtle point worth emphasizing is that the first round -- of
 the three rounds involved in Paxos -- is all about
 _recovery_.) Recovering from previous faults correctly
 must involve dropping (or delaying) a value you want to 
-write in favor of recovering a previously partially-committed value.
+write in favor of recovering a previously partially-committed 
+(accepted) value.
 
 ![paxos overview](paxos_overview.png)
 

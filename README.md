@@ -27,8 +27,14 @@ The first `if` test should be `prnd>=rnd` and the second `prnd < rnd`.
 
 This has been corrected, and clearer names applied, in
 unopt.pml's `recv_prepare_at_acceptor()`
-using `if :: ballot >= promisedToIgnoreLessThan`
-and `:: (ballot < promisedToIgnoreLessThan) -> printf("\nSKIP ");`.
+using 
+~~~
+if :: ballot >= promisedToIgnoreLessThan // line 118
+~~~
+and 
+~~~
+:: (ballot < promisedToIgnoreLessThan) -> printf("\nSKIP "); // line 121
+~~~
 
 The pdf linked above and the code shown in the markdown
 version below reflects the original,

@@ -47,6 +47,9 @@ vanilla Paxos, you will not get safety or linearizability.
 That said, omitting logs from the discussion to start with 
 is a _great_ idea for learning the essentials first.
 
+(Also, ignore his group membership change protocol, there
+are more scalable approaches.)
+
 2. Paxos Made Simple, by Leslie Lamport. 2001.
 
 https://lamport.azurewebsites.net/pubs/paxos-simple.pdf

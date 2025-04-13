@@ -19,7 +19,7 @@ and below in markdown.
 This paper was a great help to me in learning Promela.
 
 Delzanno et al give us a master class in how to 
-optimize Promela models by minimizing its state space.
+optimize Promela models by minimizing state space.
 
 The Promela language evolved a little in the
 last 11 years, and so I've updated the model files

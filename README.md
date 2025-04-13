@@ -89,7 +89,7 @@ important paper in this list, which I describe next.
 
 https://lamport.azurewebsites.net/pubs/paxos-simple.pdf
 
-Notes: This is the 2nd paper Lamport wrote about Paxos,
+Note A: This is the 2nd paper Lamport wrote about Paxos,
 the one that does _not_
 use an elaborate conceit about an ancient Greek parliament.
 It is very clear, and you should not be afraid to read
@@ -98,7 +98,12 @@ of the algorithm. Many other summaries that I've read
 get subtle details wrong, actually. So stick with
 Lamport's simple and clear description.
 
-Really the only tricky, subtle, part is: the Proposer can
+![paxos overview](paxos_overview.png)
+
+Overview of Paxos From https://arxiv.org/pdf/1703.08905 "WPaxos: Wide Area Network Flexible Consensus" by Ailijiang et al. 2019. Figure 1, page 2.
+
+Note B: Really the only tricky, subtle, part of Paxos is
+in phase one: the Proposer can
 have a value in mind they want to write, but if
 even one Acceptor in the quorum comes back with an already accepted/committed
 value, the propser must SUBSTITUTE the returned 
@@ -122,19 +127,23 @@ must involve dropping (or delaying) a value you want to
 write in favor of recovering a previously partially-committed 
 (accepted) value.
 
-![paxos overview](paxos_overview.png)
-
-Overview of Paxos From https://arxiv.org/pdf/1703.08905 "WPaxos: Wide Area Network Flexible Consensus" by Ailijiang et al. 2019. Figure 1, page 2.
+The other two phases are very straight forward. You just
+have to remember to not respond (or respond with
+a conflict message) if you run into a number 
+higher than your current ballot.
 
 3. "Revisiting The Paxos Algorithm" by Roberto De Prisco,
 Masters Thesis, MIT, 1997.
 
 https://dspace.mit.edu/bitstream/handle/1721.1/42777/38529302-MIT.pdf
 
-Notes: goes much more into multi-paxos and the time-outs
-required. Lamport sketches how multi-paxos works
-to do full Replicated State Machines, but the details
-are fully fleshed out and proven here. This is the
+Notes: goes much more into multi-paxos (which is just
+multiple iterations of the Synod protocol described
+above and in our Promela files),
+and the time-outs required when messages might be lost. 
+Lamport sketches how multi-paxos works
+to do full Replicated State Machines in Paxos Made Simple, 
+but the details are fully fleshed out and proven here. This is the
 first place where the term Multi-Paxos is used, as far
 as I can tell.
 

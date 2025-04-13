@@ -65,6 +65,33 @@ about 2 seconds, versus ~60 seconds for unopt.
 Spin is a great, old-school unix style C program that
 installs easily using the instructions from https://spinroot.com/
 
+why model check your implementation?
+----------------
+
+Distributed systems and Paxos variations are 
+notoriously unintuitive under all possible state
+transition interleavings, and thus "hand-rolled"
+optimizations are easy to get wrong. 
+
+For example, even the published
+and model checked variant of Paxos called
+EPaxos (Moraru 2013) turned out to have a mistake (Sutra 2019) in its
+author's published implementation code and TLA+ model, 
+something noted six years after publication.
+
+References for the EPaxos bug:
+
+"On the correctness of Egalitarian Paxos" by Pierre Sutra, 2019.
+https://arxiv.org/abs/1906.10917
+https://github.com/otrack/on-epaxos-correctness
+
+Epaxos original:
+
+"There Is More Consensus in Egalitarian Parliaments" by
+Iulian Moraru, David G. Andersen, Michael Kaminsky, 2013.
+https://www.cs.cmu.edu/~dga/papers/epaxos-sosp2013.pdf
+https://github.com/efficient/epaxos
+
 Some good introductions to Paxos
 --------------------------------
 
@@ -190,7 +217,7 @@ if you start with 1) or 2) above, you'll be fine.
 
 If in doubt, read the unopt.pml model file. It
 gives you a single round of Paxos (one Synod
-iteration) in less than 190 lines, including comments.
+iteration) in about 200 lines, including comments.
 You can make changes (like setting MAJORITY
 to 1 instead of 2, for 3 acceptors) and then re-run 
 the model checker to see the path to the 

@@ -1,10 +1,23 @@
 // Promela model of the basic Paxos algorithm
 // (just Synod, single round of agreement on one value).
 //
-// Extracted from the "Model Checking Paxos in Spin" paper
-// by Giorgio Delzanno, Michele Tatarek, and  Riccardo Traverso.
-// See https://arxiv.org/pdf/1408.5962
+// This is the unoptimized form (presented first in the paper).
+// 
+// * Extracted from the "Model Checking Paxos in Spin" paper
+// * by Giorgio Delzanno, Michele Tatarek, and  Riccardo Traverso.
+// * https://arxiv.org/pdf/1408.5962
 //
+// That work was Copyright(C) 2014 by these authors, and
+// licensed under the Creative Commons Attribution License (CC-BY).
+//
+/  * ...and then heavily altered, updated, and fixed
+// * to the point where it is only distantly similar/might not
+// * even be recognizable from the originally presented form.
+//
+// This version: Copyright(C) 2025 by Jason E. Aten, Ph.D.
+// License (kept the same): Creative Commons Attribution License (CC-BY).
+//
+
 // Correction applied below in recv_prepare_at_acceptor()
 // -- originally called rec_p(): the if statement should
 // be checking ballot >= promisedToIgnoreLessThan,

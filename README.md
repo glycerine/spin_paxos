@@ -40,11 +40,14 @@ to implement. Just don't believe him when he says "look Ma,
 no logs needed!" He doesn't implement logging to disk, but without logs in 
 vanilla Paxos, you will not get safety or linearizability.
 
+That said, omitting logs from the discussion to start with 
+is a _great_ idea for learning the essentials first.
+
 2. Paxos Made Simple, by Leslie Lamport. 2001.
 
 https://lamport.azurewebsites.net/pubs/paxos-simple.pdf
 
-Notes: This is the paper Lamport wrote that does not
+Notes: This is the paper Lamport wrote that does _not_
 use an elaborate conceit about an ancient Greek parliament.
 It is very clear, and you should not be afraid to read
 it for an authoritative and correct presentation 
@@ -73,9 +76,10 @@ https://lamport.azurewebsites.net/pubs/lamport-paxos.pdf
 Notes: I actually don't recommend starting here. The
 conceit of this algorithm being "discovered" by an
 archeologist, and expressed mostly in terms of an
-extensive metaphor for a parliament, makes it hard to follow.
+extensive metaphor for a Greek parliament, makes it hard to follow.
+
 This is the widely acknowledged reason for the idea that Paxos is
-hard to understand. You should be aware of this paper so
+hard to understand. So, you should be aware of this paper so
 you know _why_ it was considered hard to understand
 (and to this day, maintains that reputation), but
 if you start with 1) or 2) above, you'll be fine.

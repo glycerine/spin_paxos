@@ -287,6 +287,9 @@ on Paxos and explaining it's value. Lamport of course
 went on to win the Turing Award in 2013 for his
 body of work.
 
+on Raft
+-------
+
 After you understand Paxos, you'll probably view
 Raft as just another Paxos algorithm variant, albeit one
 tightly specified, leaving little room

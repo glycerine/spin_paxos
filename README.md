@@ -19,15 +19,25 @@ and below in markdown.
 The Promela language evolved a little in the
 last 11 years, and so I've updated the model files
 in small ways to get them to compile, and fixed all
-issues that resulted from the update. The pdf linked
-above and the code shown in the markdown
+issues that resulted from the update.
+
+Also there was a minor mistake in the first/unoptimized version
+of `rec_p()` using `if :: (prnd>rnd)` and `(prnd <=rnd) −> printf("\nSKIP ");`;
+the first `if` test should be `prnd>=rnd` and the second `prnd < rnd`.
+
+This has been corrected, and clearer names applied, in
+unopt.pml's `recv_prepare_at_acceptor()`
+using `if :: ballot >= promisedToIgnoreLessThan`
+and `:: (ballot < promisedToIgnoreLessThan) -> printf("\nSKIP ");`.
+
+The pdf linked above and the code shown in the markdown
 version below reflects the original,
 not-updated, Promela code. The updated
 code is in these two files in this repo:
 
-The unoptimized model from the paper is in unopt.pml.
+The (corrected) unoptimized model is in [unopt.pml](unopt.pml).
 
-The optimized model is in optimized.pml.
+The optimized model is in [optimized.pml](optimized.pml).
 
 The included makefile shows how to do a model-checking run
 on each of these. The optimized model is much faster,
@@ -472,7 +482,7 @@ rec_a(i, j, v, rnd, vrnd, vval) =
 ~~~
 
 
-and the atomic transition rec_pis defined as
+and the atomic transition rec_p is defined as
 
 ~~~
 rec_p(i, rnd, prnd, vrnd, vval) =

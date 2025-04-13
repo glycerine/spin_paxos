@@ -4,6 +4,11 @@
 // Extracted from the "Model Checking Paxos in Spin" paper
 // by Giorgio Delzanno, Michele Tatarek, and  Riccardo Traverso.
 // See https://arxiv.org/pdf/1408.5962
+//
+// Correction applied below in recv_prepare_at_acceptor()
+// -- originally called rec_p(): the if statement should
+// be checking ballot >= promisedToIgnoreLessThan,
+// rather than ballot > promisedToIgnoreLessThan.
 
 #define ACCEPTORS 3
 #define PROPOSERS 3
@@ -107,34 +112,35 @@ inline recv_accept_at_acceptor(i, j, v, rnd, vrnd, vval) {
 }
 }
 
-inline recv_prepare_at_acceptor(i, rnd, prnd, vrnd, vval) {
+inline recv_prepare_at_acceptor(i, promisedToIgnoreLessThan, ballot, vrnd, vval) {
   atomic {
-    prepare ?? eval(i), prnd -> printf("\nREC\n"); // prnd is current ballot.
-    if :: (prnd>rnd) -> // jea: shouldn't this be >= ???
-          promise ! prnd, vrnd, vval; // a mex{rnd, prnd, pval}
-          rnd=prnd;
-       :: (prnd <=rnd) -> printf("\nSKIP "); // jea: shouldn't this be < ???
+    prepare ?? eval(i), ballot -> printf("\nREC\n"); // ballot is current ballot.
+    if :: (ballot >= promisedToIgnoreLessThan) ->
+          promise ! ballot, vrnd, vval; // a mex{rnd, prnd, pval}
+          promisedToIgnoreLessThan=ballot;
+       :: (ballot < promisedToIgnoreLessThan) -> printf("\nSKIP ");
     fi;
-    prnd = 0 // reset to reduce state space.
+    ballot = 0 // reset to reduce state space.
   }
 }
 
 proctype acceptor(int i) {
 
-  short rnd = -1;
+  short promisedToIgnoreLessThan = -1;
   short vrnd = -1;
   short vval = -1;
   
   short j;
   short v;
-  short prnd;
+  short ballot;
   
 end:  do
-    :: recv_accept_at_acceptor(i, j, v, rnd, vrnd, vval);
+    :: recv_prepare_at_acceptor(i, promisedToIgnoreLessThan, ballot, vrnd, vval);
+    
+    :: recv_accept_at_acceptor(i, j, v, ballot, vrnd, vval);
        if :: vval != -1 -> break;  // exit after accepting a value
           :: else -> skip; // receive again
        fi;
-    :: recv_prepare_at_acceptor(i, rnd, prnd, vrnd, vval);
   od
 }
 

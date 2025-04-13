@@ -312,8 +312,8 @@ elsewhere (see below). The results speak
 for themselves: optimized model checking one
 round of three proposers and three acceptors
 finishes in about 2 seconds on my computer.
-Compared to TLA+ models that take days check
-(if they ever finish!), this was a revelation.
+Compared to TLA+ models that take _hours_ or even _days_ to check
+(if they even finish at all!), this was a revelation.
 
 Paper: "Model Checking Paxos in Spin"
 ====================

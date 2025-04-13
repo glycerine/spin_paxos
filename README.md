@@ -71,6 +71,18 @@ about 2 seconds, versus ~60 seconds for unopt.
 Spin is a great, old-school unix style C program that
 installs easily using the instructions from https://spinroot.com/
 
+In a epic design choice that I admire deeply, Spin
+works by generating a C source code file from 
+your .pml (.p) Promela file. This output file is
+called pan.c, and you then compile pan.c to
+create your "customized and compiled to your 
+exact model" version of the model checker.
+
+All this is just to say, you're going to need
+a C compiler like gcc installed, 
+since it will be called every
+time you check a model by running `make`.
+
 why model check your implementation?
 ----------------
 

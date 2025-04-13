@@ -3,7 +3,7 @@ spin_paxos
 
 ![Paxos in a single slide](paxos_single_slide.png)
 
-Above: Paxos in a single slide.
+Above: Paxos (single round, aka Synod) in a single slide.
 
 This repository contains extracted and updated
 Promela models (for running on the Spin model

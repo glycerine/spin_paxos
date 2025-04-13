@@ -65,14 +65,14 @@ Lamport's simple and clear description.
 
 Really the only tricky, subtle, part is: the Proposer can
 have a value in mind they want to write, but if
-even one Acceptor in the quorum comes back with an already committed
+even one Acceptor in the quorum comes back with an already accepted/committed
 value, the propser must SUBSTITUTE the returned 
 already committed value, in place of the one they originally
 had in mind -- and they still use the original ballot number
 that they had proposed/gotten promises back for.
 
 (Technically, the Proposer has to substitute the value with the _highest_ 
-number of all committed values seen by Acceptors, 
+number of all accepted/committed values seen by Acceptors, 
 but the subtle point worth emphasizing is that the first round -- of 
 the three rounds involved in Paxos -- is all about
 _recovery_.) Recovering from previous faults correctly

@@ -13,13 +13,13 @@ https://arxiv.org/pdf/1408.5962
 and below in markdown.
 
 The Promela language evolved a little in the
-last 11 years, and so I've updated the models 
-in small ways, and fixed a couple
-of bugs that needed fixing. The pdf linked
+last 11 years, and so I've updated the model files
+in small ways to get them to compile, and fixed all
+issues that resulted from the update. The pdf linked
 above and the code shown in the markdown
-version in the papers/ directory reflects the original,
-not-updated Promela code. The updated
-code is in these two files:
+version below reflects the original,
+not-updated, Promela code. The updated
+code is in these two files in this repo:
 
 The unoptimized model from the paper is in unopt.pml.
 
@@ -28,6 +28,57 @@ The optimized model is in optimized.pml.
 The included makefile shows how to do a model-checking run
 on each of these. The optimized model is much faster,
 about 2 seconds, versus ~60 seconds for unopt.
+
+Some good introductions to Paxos:
+
+1. CASPaxos: Replicated State Machines without logs, by Denis Rystsov.
+
+https://arxiv.org/abs/1802.07000
+
+Notes: a great, readable intro, and straight forward
+to implement. Just don't believe him when he says "look Ma,
+no logs needed!" He doesn't implement logging to disk, but without logs in 
+vanilla Paxos, you will not get safety or linearizability.
+
+2. Paxos Made Simple, by Leslie Lamport. 2001.
+
+https://lamport.azurewebsites.net/pubs/paxos-simple.pdf
+
+Notes: This is the paper Lamport wrote that does not
+use an elaborate conceit about an ancient Greek parliament.
+It is very clear, and you should not be afraid to read
+it for an authoritative and correct presentation 
+of the algorithm. Many other summaries that I've read
+get subtle details wrong, actually. So stick with the
+original, here.
+
+3. "Revisiting The Paxos Algorithm" by Roberto De Prisco,
+Masters Thesis, MIT, 1997.
+
+https://dspace.mit.edu/bitstream/handle/1721.1/42777/38529302-MIT.pdf
+
+Notes: goes much more into multi-paxos and the time-outs
+required. Lamport sketches how multi-paxos works
+to do full Replicated State Machines, but the details
+are fully fleshed out and proven here. This is the
+first place where the term Multi-Paxos is used, as far
+as I can tell.
+
+4. "The Part-Time Parliament" by Leslie Lamport. 
+
+"This article appeared in ACM Transactions on Computer Systems 16, 2 (May 1998), 133-169. Minor corrections were made on 29 August 2000."
+
+https://lamport.azurewebsites.net/pubs/lamport-paxos.pdf
+
+Notes: I actually don't recommend starting here. The
+conceit of this algorithm being "discovered" by an
+archeologist, and expressed mostly in terms of an
+extensive metaphor for a parliament, makes it hard to follow.
+This is the widely acknowledged reason for the idea that Paxos is
+hard to understand. You should be aware of this paper so
+you know _why_ it was considered hard to understand
+(and to this day, maintains that reputation), but
+if you start with 1) or 2) above, you'll be fine.
 
 ------------
 

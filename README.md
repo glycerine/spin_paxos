@@ -67,7 +67,7 @@ Really the only tricky, subtle, part is: the Proposer can
 have a value in mind they want to write, but if
 even one Acceptor in the quorum comes back with an already accepted/committed
 value, the propser must SUBSTITUTE the returned 
-already committed value, in place of the one they originally
+value for this write, in place of the one they originally
 had in mind -- and they still use the original ballot number
 that they had proposed/gotten promises back for.
 

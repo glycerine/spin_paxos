@@ -84,7 +84,23 @@ in both the TLA+ specification and the
 implementation of the Egalitarian Paxos protocol. 
 It is related to how replicas switch 
 from one ballot to another when computing 
-the dependencies of a command."
+the dependencies of a command.
+The problem may lead replicas to diverge and 
+break the linearizability of the replicated service."
+
+Moreover, though Sutra can show there is a problem,
+and has proposed a fix, he does not claim
+that his proposed fix is correct(!) From
+https://github.com/otrack/on-epaxos-correctness :
+
+"Q: Is there a fix?
+
+A: Each process needs to maintain the last ballot 
+at which it voted. This requires an additional 
+ballot variable in the algorithm. Such an approach 
+is implemented in the following repository. The 
+correctness of the resulting algorithm has 
+not been established yet."
 
 So the problem was not _within_ a single
 round of EPaxos, but _between_ then multiple

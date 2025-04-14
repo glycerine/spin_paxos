@@ -330,7 +330,10 @@ License: Creative Commons Attribution License, per the paper below.
 
 ------------
 
-The paper, translated into markdown, follows. 
+What follows is the Delzanno et al. 2014 paper, 
+"Model Checking Paxos in Spin",
+translated into markdown (pure text) for convience.
+
 The authors provide a realistic and tractable 
 model for single-round Paxos, one of the most
 useful and important of all distributed systems algorithms. 

@@ -332,7 +332,7 @@ License: Creative Commons Attribution License, per the paper below.
 
 What follows is the Delzanno et al. 2014 paper, 
 "Model Checking Paxos in Spin",
-translated into markdown (pure text) for convience.
+translated into markdown (pure text).
 
 The authors provide a realistic and tractable 
 model for single-round Paxos, one of the most

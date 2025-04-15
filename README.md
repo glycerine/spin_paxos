@@ -182,7 +182,7 @@ really similar to the the classic two-phase commit
 protocol for distributed database transactions.
 In fact, that is all Paxos is, really: 
 a new "prepare" phase, followed by a two-phase
-phase commit that yields a three-phase (5 message
+commit that yields a three-phase (5 message
 delays) protocol that is fault-tolerant.
 It's the correctness proof part that is really 
 the harder part; that and keeping 

@@ -150,19 +150,23 @@ Some good introductions to Paxos
 https://arxiv.org/abs/1802.07000
 
 Notes: a great, readable intro, and straight forward
-to implement. Just don't believe him when he says "look Ma,
-no logs needed!" He doesn't implement logging to disk, but without 
-saving the promised ballot to disk
+to implement. Just don't believe that when he says "look Ma,
+no logs needed!" that you can forgo saving state to disk.
+CASPaxos doesn't implement a replicated log (multi-paxos)
+which simplifies things tremendously, but that
+doesn't mean that saving state to disk is optional.
+Without saving state to disk
 in Paxos, you will not get safety or linearizability
 on node crash + recovery.
 
 That said, omitting logs from the discussion to start with 
 is a _great_ idea for learning the essentials first.
 
-Also, ignore Rystsov's group membership change protocol, there
-are more scalable approaches than doing changes one-by-one. 
-In fact, Lamport himself describes an approach for
-arbitrary membership changes in the most 
+Also, ignore Rystsov's group membership change protocol, 
+at least on the first pass. There
+are more scalable approaches than doing membership
+changes one-by-one. In fact, Lamport himself describes 
+an approach for arbitrary membership changes in the most 
 important paper in this list, which I describe next.
 
 2. Paxos Made Simple, by Leslie Lamport. 2001.

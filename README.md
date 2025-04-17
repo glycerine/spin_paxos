@@ -220,7 +220,10 @@ lower values in the future is also critical for correctness,
 of course, and why logging is non-optional, but I'll leave 
 the rationale for that a fun little mystery for you
 to discover; hint: it is at the heart of the correctness proof,
-but what mistake does it prevent?)
+but what mistake does it prevent? [see #on_ballot_numbers
+the end of this file for an even stronger hint, 
+but don't peak until you've tried to figure it out!])
+
 To sum up phase-one emphatically, recovering from previous faults correctly
 must involve dropping (or delaying) a value you want to 
 write in favor of recovering a previously partially-committed 
@@ -1784,3 +1787,47 @@ were made by someone other than you.
 This page was last edited on 26 January 2010, at 22:14.
 
 This wiki is licensed to the public under a Creative Commons Attribution 4.0 license. https://creativecommons.org/licenses/by/4.0/
+
+----------
+
+# on_ballot_numbers
+
+Quoting "Paxos Made Simple", page 4:
+
+> Since any set S consisting of a majority 
+> of acceptors contains at least one member 
+> of C, we can conclude that a proposal 
+> numbered n has value v by ensuring that 
+> the following invariant is maintained:
+> 
+> P2c. For any v and n, if a proposal 
+> with value v and number n is issued, 
+> then there is a set S consisting of a 
+> majority of acceptors such that either 
+> 
+> (a) no acceptor in S has accepted any 
+> proposal numbered less than n, or 
+> 
+> (b) v is the value of the highest-numbered 
+> proposal among all proposals numbered 
+> less than n accepted by the acceptors in S.
+> 
+> We can therefore satisfy P2b by maintaining 
+> the invariance of P2c.
+> 
+> To maintain the invariance of P2c, a proposer 
+> that wants to issue a pro- posal numbered n 
+> must learn the highest-numbered proposal 
+> with number less than n, if any, that has 
+> been or will be accepted by each acceptor 
+> in some majority of acceptors. 
+> 
+> Learning about proposals already accepted 
+> is easy enough; predicting future acceptances 
+> is hard. _Instead of trying to predict 
+> the future, the proposer controls it by 
+> extracting a promise that there won’t be 
+> any such acceptances_. (emphasis mine -jea)
+> In other words, the proposer requests that 
+> the acceptors not accept any more proposals 
+> numbered less than n.

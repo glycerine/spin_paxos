@@ -235,7 +235,8 @@ lower-numbered ballots, drives the correctness of
 the algorithm even in the face of faults (failure/recovery
 of nodes and lost, delayed, re-ordered, or duplicated messages).
 
-The other two phases are very straight forward. You just
+The other two phases are a very straight forward
+version of two-phase commit. You just
 have to remember to not respond (or respond with
 a conflict message--in yet another optimization atop
 the baseline; there are so many of these!) if you run into a number 

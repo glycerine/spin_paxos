@@ -1827,7 +1827,7 @@ Quoting "Paxos Made Simple", page 4:
 > is hard. _Instead of trying to predict 
 > the future, the proposer controls it by 
 > extracting a promise that there won’t be 
-> any such acceptances_. (emphasis mine -jea)
+> any such acceptances (emphasis mine -jea)_.
 > In other words, the proposer requests that 
 > the acceptors not accept any more proposals 
 > numbered less than n.

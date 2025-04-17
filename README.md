@@ -227,7 +227,10 @@ but don't peak until you've tried to figure it out!])
 To sum up phase-one emphatically, recovering from previous faults correctly
 must involve dropping (or delaying) a value you want to 
 write in favor of recovering a previously partially-committed 
-(accepted) value.
+(accepted) value. The other part, the promise mechanism to exclude
+lower-numbered ballots, drives the correctness of 
+the algorithm even in the face of faults (failure/recovery
+of nodes and lost, delayed, re-ordered, or duplicated messages).
 
 The other two phases are very straight forward. You just
 have to remember to not respond (or respond with

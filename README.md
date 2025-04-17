@@ -1790,7 +1790,7 @@ This wiki is licensed to the public under a Creative Commons Attribution 4.0 lic
 
 ----------
 
-# on_ballot_numbers
+# on_ballot_numbers and phase 1 promises
 
 Quoting "Paxos Made Simple", page 4:
 

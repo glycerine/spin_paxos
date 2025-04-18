@@ -369,8 +369,9 @@ value, the propser must SUBSTITUTE the returned
 value for this write, in place of the one they originally
 had in mind -- and they still use the original ballot number
 that they had proposed/gotten promises back for.
-System can automatically re-try a delayed write
-on the next instance of a Paxos run.
+Systems can simply automatically re-try a delayed write
+on the next instance of Paxos, but conceptually
+that gets into multi-Paxos, which we ignore just here.
 
 (I generalized a little too much just there.
 Technically, the Proposer has to substitute the value with the _highest_ 

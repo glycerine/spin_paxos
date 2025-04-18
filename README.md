@@ -184,11 +184,6 @@ that was held by a dead master) for alot of live-lock
 contention avoidance that yields high throughput
 when not in recovery mode. 
 
-For example, as an alternative to leases and to 
-preview CAS-Paxos (just below), I'll note 
-that CAS-Paxos gets its comparison-winning 
-highest availability by going leaderless.
-
 > 2.3 Hierarchical Leases
 >
 > In a fault-tolerant system leases [jea: _if_ leases are used] 
@@ -221,6 +216,13 @@ read "8 if a, b or _a_, c report". The
 descriptive text above the table has it
 stated correctly, so this confusion
 is easy to resolve as a typo.
+
+In my view, leases are needed at scale but are
+way over-used. They add a ton of costly complexity.
+We next look at how simple a system can be when
+it just implements Paxos without leaders and without leases.
+CAS-Paxos gets its comparison-winning highest
+availability by going leaderless.
 
 1. CASPaxos: Replicated State Machines without logs, by Denis Rystsov.
 

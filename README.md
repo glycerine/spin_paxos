@@ -210,6 +210,14 @@ dilema while making the common happy path fast at most any scale.
 > highly available systems that are also 
 > highly efficient.
 
+Note: there is a minor typo in the example table
+of section 6.4. In the lower left quadrant,
+"8 if a, b or b, c report" should
+read "8 if a, b or _a_, c report". The
+descriptive text above the table has it
+stated correctly, so this confusion
+is easy to resolve as a typo.
+
 1. CASPaxos: Replicated State Machines without logs, by Denis Rystsov.
 
 https://arxiv.org/abs/1802.07000

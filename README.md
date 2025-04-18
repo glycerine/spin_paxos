@@ -182,7 +182,12 @@ the common happy-path fast at scale. They trade off
 a little availability (wait for the lease to timeout
 that was held by a dead master) for alot of live-lock 
 contention avoidance that yields high throughput
-when not in recovery mode.
+when not in recovery mode. 
+
+For example, as an alternative to leases and to 
+preview CAS-Paxos (just below), I'll note 
+that CAS-Paxos gets its comparison-winning 
+highest availability by going leaderless.
 
 > 2.3 Hierarchical Leases
 >
@@ -240,6 +245,44 @@ are more scalable approaches than doing membership
 changes one-by-one. In fact, Lamport himself describes 
 an approach for arbitrary membership changes in the second-most 
 important paper in this list (after Lampson), which I describe next.
+
+On going leaderless, as CAS-Paxos does: 
+be aware that the live-lock problem
+is real, and you'll need to add exponential back-off
+with jitter if you don't use master election with leases; even
+then your throughput on contention may slow you down.
+
+This can be worthwhile trade-off for rarely
+consulted service, getting simplicity of implementation in exchange for
+proposers having to re-try (possibly forever, but
+practically a time-out can be returned).
+It is still programmer-convenient in that 
+clients can still be blissfully unaware of the back-off
+and re-try happening under the covers on the
+propser side (clients just see slower responses).
+As https://sre.google/sre-book/managing-critical-state says,
+
+> All practical consensus systems address this issue 
+> of collisions, usually either by electing a proposer 
+> process, which makes all proposals in the system, or 
+> by using a rotating proposer that allocates each 
+> process particular slots for their proposals.
+>
+> For systems that use a leader process, the 
+> leader election process must be tuned carefully 
+> to balance the system unavailability that 
+> occurs when no leader is present with the risk 
+> of dueling proposers. It’s important to implement 
+> the right timeouts and backoff strategies. 
+> If multiple processes detect that there 
+> is no leader and all attempt to become leader 
+> at the same time, then none of the processes 
+> is likely to succeed (again, dueling proposers). 
+> Introducing randomness is the best 
+> approach [jea: you _really must use jitter_ 
+> if you do the exponential-backoff leaderless approach]. 
+> Raft (Ong14; https://raft.github.io/ ), for example, has a well-thought-out 
+> method of approaching the leader election process.
 
 2. Paxos Made Simple, by Leslie Lamport. 2001.
 

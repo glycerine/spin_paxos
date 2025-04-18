@@ -27,39 +27,13 @@ last 11 years, and so I've updated the model files
 in small ways to get them to compile, and fixed all
 issues that resulted from the update.
 
-Per the CC-BY license requiring annotation of changes:
-
-There was a minor mistake in the first/unoptimized version
-of `rec_p()` using `if :: (prnd>rnd)` and `(prnd <=rnd) −> printf("\nSKIP ")`.
-The first `if` test should be `prnd>=rnd` and the second `prnd < rnd`.
-
-This has been corrected, and clearer names applied, in
-unopt.pml's `recv_prepare_at_acceptor()`
-using 
-~~~
-if :: ballot >= promisedToIgnoreLessThan // line 118
-~~~
-and 
-~~~
-:: (ballot < promisedToIgnoreLessThan) -> printf("\nSKIP "); // line 121
-~~~
-
-The pdf linked above and the code shown in the markdown
-version below give the original, as published,
-Promela code. 
-
-The updated and corrected code is in this repo. See these two files:
-
-The (corrected) unoptimized model is in [unopt.pml](unopt.pml).
-
-The (corrected) optimized model is in [optimized.pml](optimized.pml).
-
-A second correction was applied in the acceptor_optimized() process of the optimized.pml file
-[line 193 was missing in the original second/optimized acceptor() proctype](
-https://github.com/glycerine/spin_paxos/blob/master/optimized.pml#L193)
-The optimized version shown in the published paper 
-stalls and completes no rounds without this correction,
-as the acceptor does not reply with any phase 1 promise message.
+In the rest of this README, I'll describe
+how to check the models with Spin, give an introduction
+to the theory and practice of Paxos, give pointers to the 
+Paxos literature, and discuss the design trade-offs involved in
+the many variations of Paxos available for
+a given use case. The full Delzanno et al paper appears
+at the end.
 
 checking the model with spin
 ------------------
@@ -251,7 +225,7 @@ This can be worthwhile trade-off for a rarely
 changing service, getting simplicity of implementation in exchange for
 proposers having to re-try (possibly forever, but
 practically a time-out can be returned). 
-When we do have a local rarely written-mostly-read
+When we do have a local rarely-written-mostly-read
 service (like configuration/membership), meaning we 
 don't change it much, the service could simply 
 alert on an update, making polling un-necessary and 
@@ -263,7 +237,32 @@ Startup and restart are comparatively rare, so
 to me this is a big win for simpler and smaller code.
 I use this approach in my own systems to keep
 the implementation compact and readable. Leases induce
-a massively more complex protocol.
+a massively more complex protocol. 
+
+The only trade-off here is that any read client 
+that doesn't do the full round of Paxos themselves
+is vulnerable to not having the very latest update by the time they
+get the message (due to network message delay,
+an update could have been applied "before" ). 
+This however is inherent in all distributed
+systems (see relativity in physics) -- and 
+especially those that cannot
+afford everyone running consensus and so 
+use a central coordinator cluster 
+(e.g. Chubby at Google/etcd in Kubernetes), 
+and is mitigated both by TCP's properties and clients simply telling 
+their heartbeat partner about their latest version
+and getting any newer/latest update to the 
+consensus value on the return beat.
+This works well for small configuration state 
+that easily piggy backs on the heartbeat. It
+is a "lightweight" polling-by-proxy mechanism,
+suitable for slowly changing configuration.
+Like humans, the client still only ever sees values that were correct
+at some point in the past (a few milliseconds
+ago for the trip between light reflecting off
+an object, hitting the eyes, and the signal being 
+transmitted to the brain).
 
 Also note that re-tries after back-off are still
 programmer-convenient in that 
@@ -524,6 +523,44 @@ round of three proposers and three acceptors
 finishes in about 2 seconds on my computer.
 Compared to TLA+ models that take _hours_ or even _days_ to check
 (if they even finish at all!), this was a revelation.
+
+Notes on corrections, and per the CC-BY license requiring annotation of changes:
+
+There was a minor mistake in the first/unoptimized version
+of `rec_p()` using `if :: (prnd>rnd)` and `(prnd <=rnd) −> printf("\nSKIP ")`.
+The first `if` test should be `prnd>=rnd` and the second `prnd < rnd`.
+
+This has been corrected, and clearer names applied, in
+unopt.pml's `recv_prepare_at_acceptor()`
+using 
+~~~
+if :: ballot >= promisedToIgnoreLessThan // line 118
+~~~
+and 
+~~~
+:: (ballot < promisedToIgnoreLessThan) -> printf("\nSKIP "); // line 121
+~~~
+
+The pdf linked above and the code shown in the markdown
+version below give the original, as published,
+Promela code. 
+
+The updated and corrected code is in this repo. See these two files:
+
+The (corrected) unoptimized model is in [unopt.pml](unopt.pml).
+
+The (corrected) optimized model is in [optimized.pml](optimized.pml).
+
+A second correction was applied in the acceptor_optimized() process of the optimized.pml file
+[line 193 was missing in the original second/optimized acceptor() proctype](
+https://github.com/glycerine/spin_paxos/blob/master/optimized.pml#L193)
+The optimized version shown in the published paper 
+stalls and completes no rounds without this correction,
+as the acceptor does not reply with any phase 1 promise message.
+
+In summary, the included Promela files are my creation,
+with lots of renames and upgrades, but these rest on the bones
+provided by Delzanno et al.
 
 Paper: "Model Checking Paxos in Spin"
 ====================

@@ -257,7 +257,8 @@ don't change it much, the service could simply
 alert on an update, making polling un-necessary and 
 then only the much less common writes would contend.
 Of course clients still have to poll once on their
-startup and to establish an change-notification channel.
+startup and to establish a change-notification channel,
+(and probably heart-beats too, e.g. to detect partition).
 Startup and restart are comparatively rare, so
 to me this is a big win for simpler and smaller code.
 I use this approach in my own systems to keep

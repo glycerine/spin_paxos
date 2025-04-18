@@ -278,7 +278,7 @@ that for system that actually
 do need to support alot of writes, you'll probably
 need the complexity of leases.
 
-![dueling_proposers.png]
+![Figure 23-8 from the "Managing Critical State" SRE book](dueling_proposers.png)
 
 > All practical consensus systems address this issue 
 > of collisions, usually either by electing a proposer 

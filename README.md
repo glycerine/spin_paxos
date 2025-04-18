@@ -168,22 +168,21 @@ correct even it cannot be mapped back to Paxos, but you'll
 have to prove that _all on your own_; a fraught prospect
 compared to relying on bedrock Paxos.
 
-As a bonus, Lampson teaches hierarchical-leases, which
-the countless other papers (e.g. Quorum Read Paxos?) re-invent or re-discover.
-There seems to be a minor industry devoted to re-discovering
-and popularizing Paxos optimizations that are well-known
-in the literature. This gashes potholes into an already muddy field,
-so it is worth reading these originals as much as possible.
+As a bonus, Lampson teaches hierarchical leases.
 
 I'll quote that section, because it was new to me, and
-because it is vastly simpler than
-trying to understand the Vertical Paxos paper. This is
-important because leases are the most common antidote 
+because it suggests a very practical idea. Hierarchical
+leases are important because leases are the most common antidote 
 to the livelock "problem" inherent in basic (leaderless) Paxos.
-I put problem in quotes because it is the other side
+I put "problem" in quotes because it is the other side
 of the high-availability coin. It is hard to get one
-without the other. A hierarchy of leases solves this
-dilema while making the common happy path fast at most any scale.
+without the other. Leases, and for a big cluster, a
+hierarchy of leases, solve this dilema while making 
+the common happy-path fast at scale. They trade off
+a little availability (wait for the lease to timeout
+that was held by a dead master) for alot of live-lock 
+contention avoidance that yields high throughput
+when not in recovery mode.
 
 > 2.3 Hierarchical Leases
 >

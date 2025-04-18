@@ -369,6 +369,8 @@ value, the propser must SUBSTITUTE the returned
 value for this write, in place of the one they originally
 had in mind -- and they still use the original ballot number
 that they had proposed/gotten promises back for.
+System can automatically re-try a delayed write
+on the next instance of a Paxos run.
 
 (I generalized a little too much just there.
 Technically, the Proposer has to substitute the value with the _highest_ 
@@ -377,7 +379,7 @@ but the perhaps non-obvious point worth emphasizing is that the first phase -- o
 the three phases involved in Paxos -- is mostly about
 _recovery_ ; the other part about promising to ignore
 lower values in the future is also critical for correctness,
-of course, and why logging is non-optional, but I'll leave 
+of course, and why save-to-disk is not optional, but I'll leave 
 the rationale for that a fun little mystery for you
 to discover; hint: it is at the heart of the correctness proof,
 but what mistake does it prevent? [see #on_ballot_numbers

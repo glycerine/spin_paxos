@@ -145,6 +145,29 @@ https://github.com/efficient/epaxos
 Some good introductions to Paxos
 --------------------------------
 
+0. [Lampson 1996 local copy](lampson_1996_how_to_build_ha_consensus.pdf)
+
+https://www.microsoft.com/en-us/research/wp-content/uploads/1996/10/Acrobat-58-Copy.pdf
+
+Butler Lampson's 1996 paper, "How to Build a Highly Available System
+Using Consensus", is by far and away the best
+paper to read to understand Paxos. It gives both the
+practical side and the theory side in easily digestible
+steps. The big bonus of learning the theory is that 
+it shows how to prove (in the theoretical sense of a math proof)
+that your implementation _and its optimizations_ are still correct,
+without needing a model checker. This is not to say
+that you shouldn't model check your algorithm, but
+a proof using the technique that Lampson teaches will be faster,
+stronger, and will (hopefully) prevent you from making
+"accidental" buggy deviations, because you will know which 
+invariants you must maintain.
+
+Sure, your new, cool variant algorithm might still be 
+correct even it cannot be mapped back to Paxos, but you'll
+have to prove that _all on your own_; a fraught prospect
+compared to relying on bedrock Paxos.
+
 1. CASPaxos: Replicated State Machines without logs, by Denis Rystsov.
 
 https://arxiv.org/abs/1802.07000

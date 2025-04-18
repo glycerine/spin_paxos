@@ -169,7 +169,7 @@ have to prove that _all on your own_; a fraught prospect
 compared to relying on bedrock Paxos.
 
 As a bonus, Lampson teaches hierarchical-leases, which
-the countless other papers (e.g. Quorum Read Paxos) re-invent or re-discover.
+the countless other papers (e.g. Quorum Read Paxos?) re-invent or re-discover.
 There seems to be a minor industry devoted to re-discovering
 and popularizing Paxos optimizations that are well-known
 in the literature. This gashes potholes into an already muddy field,

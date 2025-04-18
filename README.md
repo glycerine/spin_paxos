@@ -267,6 +267,13 @@ ago for the trip between light reflecting off
 an object, hitting the eyes, and the signal being 
 transmitted to the brain). Clients might 
 be slightly behind, but are always safely correct.
+We assume that the proxy (member of the
+Paxos coordination cluster) itself does
+regular reads through the full system, to
+detect partition and stay up to date; and
+only tells the client if something has
+changed with respect to the version in the
+client's heart-beat check.
 
 Also note that re-tries after back-off are still
 programmer-convenient in that 

@@ -277,7 +277,7 @@ lease timeout issues, I'll quote https://sre.google/sre-book/managing-critical-s
 (under figure 23-8 picturing dueling proposers; 
 in the "Multi-Paxos: Detailed Message Flow" section,
 reproduced below) which makes the point 
-that for system that actually
+that for systems that actually
 do need to support alot of writes, you'll probably
 need the complexity of leases.
 

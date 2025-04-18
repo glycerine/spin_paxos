@@ -243,8 +243,9 @@ The only trade-off here is that any read client
 that doesn't do the full round of Paxos themselves
 is vulnerable to not having the very latest update by the time they
 get the message (due to network message delay,
-an update could have been applied "before" ). 
-This however is inherent in all distributed
+an update could have been applied
+"after" the one we get and "before" the
+client message arrives).  This however is inherent in all distributed
 systems (see relativity in physics) -- and 
 especially those that cannot
 afford everyone running consensus and so 

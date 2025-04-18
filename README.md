@@ -175,10 +175,15 @@ and popularizing Paxos optimizations that are well-known
 in the literature. This gashes potholes into an already muddy field,
 so it is worth reading these originals as much as possible.
 
-I'll quote that section, because it is vastly simpler than
-trying to understand the Vertical Paxos paper, and because
-leases are the most common antidote to the livelock 
-problem inherent in basic Paxos.
+I'll quote that section, because it was new to me, and
+because it is vastly simpler than
+trying to understand the Vertical Paxos paper. This is
+important because leases are the most common antidote 
+to the livelock "problem" inherent in basic (leaderless) Paxos.
+I put problem in quotes because it is the other side
+of the high-availability coin. It is hard to get one
+without the other. A hierarchy of leases makes
+the common happy path fast at most any scale.
 
 > 2.3 Hierarchical Leases
 >

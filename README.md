@@ -245,7 +245,8 @@ is vulnerable to not having the very latest update by the time they
 get the message (due to network message delay,
 an update could have been applied
 "after" the one we get and "before" the
-client message arrives).  This however is inherent in all distributed
+client message arrives).
+This however is inherent in all distributed
 systems (see relativity in physics) -- and 
 especially those that cannot
 afford everyone running consensus and so 

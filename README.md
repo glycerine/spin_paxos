@@ -225,14 +225,15 @@ This can be worthwhile trade-off for a rarely
 changing service, getting simplicity of implementation in exchange for
 proposers having to re-try (possibly forever, but
 practically a time-out can be returned). 
-When we do have a local rarely-written-mostly-read
-service (like configuration/membership), meaning we 
-don't change it much, the service could simply 
-alert on an update, making polling un-necessary and 
+When we do have a mostly static, rarely-written
+and mostly-read service (like configuration/group 
+membership), meaning we don't change it much, the service can simply 
+alert on an update, making full read Paxos cycles unnecessary and 
 then only the much less common writes would contend.
+
 Of course clients still have to poll once on their
 startup and to establish a change-notification channel,
-(and probably heart-beats too, e.g. to detect partition).
+(and probably heart-beats too).
 Startup and restart are comparatively rare, so
 to me this is a big win for simpler and smaller code.
 I use this approach in my own systems to keep
@@ -264,7 +265,8 @@ Like humans, the client still only ever sees values that were correct
 at some point in the past (a few milliseconds
 ago for the trip between light reflecting off
 an object, hitting the eyes, and the signal being 
-transmitted to the brain).
+transmitted to the brain). Clients might 
+be slightly behind, but are always safely correct.
 
 Also note that re-tries after back-off are still
 programmer-convenient in that 

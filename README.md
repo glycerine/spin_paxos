@@ -182,8 +182,8 @@ important because leases are the most common antidote
 to the livelock "problem" inherent in basic (leaderless) Paxos.
 I put problem in quotes because it is the other side
 of the high-availability coin. It is hard to get one
-without the other. A hierarchy of leases makes
-the common happy path fast at most any scale.
+without the other. A hierarchy of leases solves this
+dilema while making the common happy path fast at most any scale.
 
 > 2.3 Hierarchical Leases
 >

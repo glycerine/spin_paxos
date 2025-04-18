@@ -239,28 +239,46 @@ on node crash + recovery.
 That said, omitting logs from the discussion to start with 
 is a _great_ idea for learning the essentials first.
 
-Also, ignore Rystsov's group membership change protocol, 
-at least on the first pass. There
-are more scalable approaches than doing membership
-changes one-by-one. In fact, Lamport himself describes 
-an approach for arbitrary membership changes in the second-most 
-important paper in this list (after Lampson), which I describe next.
-
 On going leaderless, as CAS-Paxos does: 
 be aware that the live-lock problem
 is real, and you'll need to add exponential back-off
-with jitter if you don't use master election with leases; even
+_with jitter_ if you don't use master election with leases; even
 then your throughput on contention may slow you down.
 
-This can be worthwhile trade-off for rarely
-consulted service, getting simplicity of implementation in exchange for
+This can be worthwhile trade-off for a rarely
+changing service, getting simplicity of implementation in exchange for
 proposers having to re-try (possibly forever, but
-practically a time-out can be returned).
-It is still programmer-convenient in that 
-clients can still be blissfully unaware of the back-off
+practically a time-out can be returned). 
+When we do have a local rarely written-mostly-read
+service (like configuration/membership), meaning we 
+don't change it much, the service could simply 
+alert on an update, making polling un-necessary and 
+then only the much less common writes would contend.
+Of course clients still have to poll once on their
+startup and to establish an change-notification channel.
+Startup and restart are comparatively rare, so
+to me this is a big win for simpler and smaller code.
+I use this approach in my own systems to keep
+the implementation compact and readable. Leases induce
+a massively more complex protocol.
+
+Also note that re-tries after back-off are still
+programmer-convenient in that 
+clients can be blissfully unaware of the back-off
 and re-try happening under the covers on the
-propser side (clients just see slower responses).
-As https://sre.google/sre-book/managing-critical-state says,
+proposer side (clients just wait longer, rarely
+getting a full time-out error). 
+
+To summarize the live-lock versus leader-election and 
+lease timeout issues, I'll quote https://sre.google/sre-book/managing-critical-state
+(under figure 23-8 picturing dueling proposers; 
+in the "Multi-Paxos: Detailed Message Flow" section,
+reproduced below) which makes the point 
+that for system that actually
+do need to support alot of writes, you'll probably
+need the complexity of leases.
+
+![dueling_proposers.png]
 
 > All practical consensus systems address this issue 
 > of collisions, usually either by electing a proposer 
@@ -283,6 +301,13 @@ As https://sre.google/sre-book/managing-critical-state says,
 > if you do the exponential-backoff leaderless approach]. 
 > Raft (Ong14; https://raft.github.io/ ), for example, has a well-thought-out 
 > method of approaching the leader election process.
+
+Final note on CAS-Paxos: I would ignore Rystsov's 
+group membership change protocol, at least on the first pass. There
+are more scalable approaches than doing membership
+changes one-by-one. In fact, Lamport himself describes 
+an approach for arbitrary membership changes in the second-most 
+important paper in this list (after Lampson), which I describe next
 
 2. Paxos Made Simple, by Leslie Lamport. 2001.
 

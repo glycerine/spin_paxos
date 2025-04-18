@@ -168,6 +168,40 @@ correct even it cannot be mapped back to Paxos, but you'll
 have to prove that _all on your own_; a fraught prospect
 compared to relying on bedrock Paxos.
 
+As a bonus, Lampson teaches hierarchical-leases, which
+the countless other papers (e.g. Quorum Read Paxos) re-invent or re-discover.
+There seems to be a minor industry devoted to re-discovering
+and popularizing Paxos optimizations that are well-known
+in the literature. This gashes potholes into an already muddy field,
+so it is worth reading these originals as much as possible.
+
+To quote that section:
+
+> 2.3 Hierarchical Leases
+>
+> In a fault-tolerant system leases [jea: _if_ leases are used] 
+> must be granted and renewed by running consensus. If
+> this much use of consensus is still too expensive, 
+> the solution is hierarchical leases.
+>
+> Run consensus once to elect a czar C and give C a 
+> lease on a large part of the state.
+> Now C gives out sub-leases on x and y to masters. 
+> Each master controls its own resources. The masters 
+> renew their sub-leases with the czar. This is cheap since it
+> doesn’t require any coordination. The czar 
+> renews its lease by consensus. This costs
+> more, but there’s only one czar lease. Also, 
+> the czar can be simple and less likely to
+> fail, so a longer lease may be acceptable.
+> Hierarchical leases are commonly used in 
+> replicated file systems and in clusters.
+>
+>    By combining the ideas of consensus, leases, 
+> and hierarchy, it’s possible to build
+> highly available systems that are also 
+> highly efficient.
+
 1. CASPaxos: Replicated State Machines without logs, by Denis Rystsov.
 
 https://arxiv.org/abs/1802.07000

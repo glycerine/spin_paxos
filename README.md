@@ -374,10 +374,28 @@ but what mistake does it prevent? [see #on_ballot_numbers
 the end of this file for an even stronger hint, 
 but don't peak until you've tried to figure it out!])
 
+The critical thing about this first recovery/prepare phase
+is that the value (if any) that is returned during prepare
+_could have been_ chosen by a quorum in the past.
+Also, it is important to note that it _might not have 
+been chosen_. We cannot assume either way. It might 
+never have gotten a majority of
+accepts in the past. Or it might have gotten quorum. On recovery, 
+we just don't know. The beauty of the Paxos algorithm
+is that we don't need to know and we can still get
+linearizability. To be safe, and since we know
+at least that the value was a valid value at some point, 
+we try to get it chosen -- to cover all bases. We
+might still get conflicted-out by incoming (new or
+late arriving) messages, but that is the correctness
+versus live-lock trade-off we make to get high
+availability. We might timeout, but if we return
+a value, it's a good value.
+
 To sum up phase-one emphatically, recovering from previous faults correctly
 must involve dropping (or delaying) a value you want to 
-write in favor of recovering a previously partially-committed 
-(accepted) value. The other part, the promise mechanism to exclude
+write in favor of recovering a previously partially-accepted
+or fully accepted value. The other part, the promise mechanism to exclude
 lower-numbered ballots, drives the correctness of 
 the algorithm even in the face of faults (failure/recovery
 of nodes and lost, delayed, re-ordered, or duplicated messages).

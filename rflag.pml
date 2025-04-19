@@ -67,13 +67,13 @@ inline accumHighest(i, pr, count, highestAcceptedRound, highestAcceptedValue, cu
                    highestAcceptedValue = pr.acceptedVal;
             :: else
           fi;
-       //:: pr.promised > curBallot -> // must abort the round, right? + try higher ballot
-       //  assert(false); // does this happen? yes. acceptors should be rejecting too
+       //:: pr.promised > curBallot -> // must abort the round, right? + try higher ballot. this is the proposer, so why bother trying to get a lower number ballot acccepted, acceptors will never take it.
+       //  assert(false); // does this happen? yes. also, acceptors should be rejecting too
        :: else
      fi;
      i++;
   :: else ->
-     pr.acceptedNum =0; pr.acceptedVal =0; pr.promised =0; i=0;
+     pr.acceptedNum =0; pr.acceptedVal =0; pr.promised =0; i=0; // minimize state change
      break;
  od;
  }

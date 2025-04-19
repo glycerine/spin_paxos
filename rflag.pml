@@ -55,20 +55,20 @@ chan phase2bLearn = [MAX] of {short, short, short}; // learning
 // Section 6 of paper, optimized versions of the above.
 //
 
-// a proposer routine
-inline occ(i, pr, count, hr, hv, curRound) {
+// a proposer subroutine in phase 2
+inline occ(i, pr, count, highestAcceptedRound, highestAcceptedValue, curRound) {
  d_step{
   printf("i = %d, len(phase1bPromise) = %d; len(phase1aPrepare) = %d\n", i, len(phase1bPromise), len(phase1aPrepare));
   
   do
-   :: i < len(phase1bPromise) -> 
-     phase1bPromise ? pr; phase1bPromise ! pr;
+   :: i < len(phase1bPromise) ->    // can we move to phase 2, sending acceptPlease?
+     phase1bPromise ? pr; phase1bPromise ! pr; // read+replace minimizes state changes
      if
        :: pr.promised == curRound ->
           count++;
           if
-            :: pr.acceptedNum > hr ->
-               hr = pr.acceptedNum; hv = pr.acceptedVal;
+            :: pr.acceptedNum > highestAcceptedRound ->
+               highestAcceptedRound = pr.acceptedNum; highestAcceptedValue = pr.acceptedVal;
             :: else
           fi;
        :: else
@@ -81,41 +81,39 @@ inline occ(i, pr, count, hr, hv, curRound) {
  }
 }
 
-// "[In the Section 6 optimized version, an] accept 
-// message is broadcasted to the acceptors 
-// when majority is detected. This is implemented
-// in the test procedure defined as follows."
-// (used in qt).
-inline test(count, hr, hv, myval, curRound, aux) {
-if
-  :: count >=MAJORITY ->
-     aux =(hr < 0 -> myval : hv); // conditional expression
-     // unreached, strange, so try inlining manually:
-     // bcastPhase2aAcceptPlease(curRound, aux);
-     int k = 1; 
-     do
-       ::(k <= ACCEPTORS) ->
-          printf("k = %d in bcastPhase2aAcceptPlease inline, ACCEPTORs=%d\n", k, ACCEPTORS);
-          phase2aAcceptPlease !! k,curRound,aux;
-          k++;
-       ::else -> break;
-     od
-     break;
-  :: else
-fi;
+// broadcast phase2aAcceptPlease to the acceptors when
+// the phase 1 majority is detected.
+//
+inline checkPrepQuorum(count, highestAcceptedRound, highestAcceptedValue,
+                       myval, curRound, applyVal) {
+  if
+    :: count >=MAJORITY ->
+         applyVal =(highestAcceptedRound < 0 -> myval : highestAcceptedValue); 
+         // manually inlined bcastPhase2aAcceptPlease(curRound, applyVal)...
+         int k = 1; 
+         do
+           ::(k <= ACCEPTORS) ->
+              printf("k = %d in bcastPhase2aAcceptPlease inline, ACCEPTORs=%d\n", k, ACCEPTORS);
+              phase2aAcceptPlease !! k, curRound, applyVal;
+              k++;
+           ::else -> break;
+         od
+         break;
+    :: else
+  fi;
 }
 
-// a proposer routine
-inline qt(i, pr, count, hr, hv, myval,curRound, aux) {
+// a proposer routine for phase 2
+inline proposerPhase2(i, pr, count, highestAcceptedRound, highestAcceptedValue, myval,curRound, aux) {
   atomic {
-    occ(i, pr, count, hr, hv, curRound);
-    test(count, hr, hv, myval, curRound, aux); 
-    hv= -1; hr = -1; count = 0; aux = 0; 
+    occ(i, pr, count, highestAcceptedRound, highestAcceptedValue, curRound);
+    checkPrepQuorum(count, highestAcceptedRound, highestAcceptedValue, myval, curRound, aux); 
+    highestAcceptedValue= -1; highestAcceptedRound = -1; count = 0; aux = 0; 
   }
 }
 
 proctype proposer_optimized(short curRound; short myval) {
-  short aux, hr = -1, hv = -1;
+  short aux, highestAcceptedRound = -1, highestAcceptedValue = -1;
   short rnd;
   short acceptedNum, acceptedVal;
   byte count =0, i = 0;
@@ -130,13 +128,15 @@ proctype proposer_optimized(short curRound; short myval) {
         phase1aPrepare !! j, curRound;
         printf("sent on phase1aPrepare j = %d, curRound = %d\n", j, curRound);
         j++;
-     :: else -> break;
+     :: else -> break; // we have prepare quorum.
     od
     // end of manually unrolled broadcastPhase1aPrepare(curRound);
   } // end of d_step
-end:  do
-    :: qt(i, pr, count, hr, hv, myval, curRound, aux);
-  od
+  
+  // begin phase 2, after prepare quorum achieved.
+  end: do
+        :: proposerPhase2(i, pr, count, highestAcceptedRound, highestAcceptedValue, myval, curRound, aux);
+       od
 }
 
 
@@ -145,7 +145,7 @@ proctype acceptor_optimized(int id) {
   printf("top of acceptor_optimized, id = %d; len(phase1aPrepare) = %d\n", id, len(phase1aPrepare));
   short curRound = -1; // max ballot seen.
   short acceptedNum = -1, acceptedVal = -1;
-  short aval, rnd;
+  short acceptThisVal, rnd;
   do
     :: d_step {
          phase1aPrepare ?? <eval(id), rnd> ->
@@ -161,17 +161,17 @@ proctype acceptor_optimized(int id) {
        phase1bPromise !! curRound, acceptedNum, acceptedVal;
        //printf("phase1aPrepare ?? was run, and phase1bPromise ! too\n");
     :: d_step {
-         phase2aAcceptPlease ?? eval(id), rnd, aval ->
+         phase2aAcceptPlease ?? eval(id), rnd, acceptThisVal ->
          if
            ::(rnd >=curRound) -> // ballot in rnd is >= promised, so commit.
              curRound = rnd;
              acceptedNum = rnd;
-             acceptedVal = aval;
-             phase2bLearn !! id, curRound, aval;
+             acceptedVal = acceptThisVal;
+             phase2bLearn !! id, curRound, acceptThisVal;
              printf("acceptor id = %d replied on phase2bLearn\n", id);
            :: else
          fi;
-         rnd = 0; aval = 0;
+         rnd = 0; acceptThisVal = 0;
        }
        break;
   od
@@ -179,19 +179,19 @@ proctype acceptor_optimized(int id) {
 }
 
 
-inline read_learn_chan_and_assert(id, rnd, lval, lastval, mcount) {
+inline read_learn_chan_and_assert(id, rnd, lval, lastval, acceptCount) {
   d_step {
     phase2bLearn ?? id, rnd, lval ->
        printf("read_learn read from phase2bLearn: id = %d, rnd = %d, lval = %d\n", id, rnd, lval);
     if
-      :: mcount [rnd -1] < MAJORITY ->
-           mcount [rnd -1]++;
-           printf("read_learn: id = %d, rnd = %d, %d < MAJ\n", id, rnd, mcount[rnd-1]);
+      :: acceptCount [rnd -1] < MAJORITY ->
+           acceptCount [rnd -1]++;
+           printf("read_learn: id = %d, rnd = %d, %d < MAJ\n", id, rnd, acceptCount[rnd-1]);
       :: else
     fi;
     if
-      :: mcount [rnd -1] >= MAJORITY ->
-           printf("read_learn: id = %d, mcount = %d >= MAJ\n", id, mcount[rnd-1]);      
+      :: acceptCount [rnd -1] >= MAJORITY ->
+           printf("read_learn: id = %d, acceptCount = %d >= MAJ\n", id, acceptCount[rnd-1]);      
          if :: (lastval >= 0 && lastval != lval) ->
                  printf("assert error: lastval: %d != lval: %d\n", lastval, lval);
                  assert(false); // equiv to assert(lastval == lval)
@@ -209,10 +209,10 @@ inline read_learn_chan_and_assert(id, rnd, lval, lastval, mcount) {
 // consistency (asserts inside read_learn_chan_and_assert).
 active proctype learner_assert_consistency() {
   short lastval = -1, id, rnd, lval;
-  byte mcount[PROPOSERS];
+  byte acceptCount[PROPOSERS];
   bool done = false;
 end:  do
-    :: read_learn_chan_and_assert(id, rnd, lval, lastval, mcount);
+    :: read_learn_chan_and_assert(id, rnd, lval, lastval, acceptCount);
     :: done -> break;
   od
   printf("learner_assert_consistency is done.\n");

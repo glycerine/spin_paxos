@@ -361,57 +361,165 @@ or even eliminated all together.
 
 Overview of Paxos From https://arxiv.org/pdf/1703.08905 "WPaxos: Wide Area Network Flexible Consensus" by Ailijiang et al. 2019. Figure 1, page 2.
 
-Note B: Really the only tricky, subtle, part of Paxos is
+getting at the intuition behind Paxos
+------------------------
+
+Let's take a brief but deep dive into single decree Paxos,
+also called Synod.
+
+Really the only tricky, subtle, part of Paxos is
 in phase one: the Proposer can
 have a value in mind they want to write, but if
 even one Acceptor in the quorum comes back with an already accepted/committed
 value, the propser must SUBSTITUTE the returned 
 value for this write, in place of the one they originally
-had in mind -- and they still use the original ballot number
+had in mind -- and then still use the original ballot number
 that they had proposed/gotten promises back for.
 Systems can simply automatically re-try a delayed write
 on the next instance of Paxos, but conceptually
-that gets into multi-Paxos, which we ignore just here.
+that gets into multi-Paxos, which is beyond
+this next discussion: a focused exploration of basic Paxos.
 
 (I generalized a little too much just there.
 Technically, the Proposer has to substitute the value with the _highest_ 
-number of all accepted/committed values seen by Acceptors, 
-but the perhaps non-obvious point worth emphasizing is that the first phase -- of 
-the three phases involved in Paxos -- is mostly about
-_recovery_ ; the other part about promising to ignore
-lower values in the future is also critical for correctness,
-of course, and why save-to-disk is not optional, but I'll leave 
-the rationale for that a fun little mystery for you
-to discover; hint: it is at the heart of the correctness proof,
-but what mistake does it prevent? [see #on_ballot_numbers
-the end of this file for an even stronger hint, 
-but don't peak until you've tried to figure it out!])
+number of all accepted/committed values seen by Acceptors).
+Interestingly, this value the acceptors give us, 
+assuming it is not-nil, is like Schreodinger's cat.
+We don't know if it is alive or dead (chosen or not) just from
+the quorum of prepare responses. If we happen to get lucky, or
+if we willing to wait for all nodes to be up, then
+we could tell after the prepare phase. In
+general we don't know for sure, so the classic Synod approach
+keeps it simple and doesn't try to optimize for
+the lucky break read--also usually we prefer to chop off our tail latency
+by getting the minimal necessary quorum of
+responses, rather than wait around who-knows how
+long to see if we can avoid the cost of 1.5 more network round-trips.
 
-The critical thing about this first recovery/prepare phase
-is that the value (if any) that is returned during prepare
-_could have been_ chosen by a quorum in the past.
-Also, it is important to note that it _might not have 
-been chosen_. We cannot assume either way. It might 
-never have gotten a majority of
-accepts in the past. Or it might have gotten quorum. On recovery, 
-we just don't know. The beauty of the Paxos algorithm
-is that we don't need to know and we can still get
-linearizability. To be safe, and since we know
-at least that the value was a valid value at some point, 
-we try to get it chosen -- to cover all bases. We
-might still get conflicted-out by incoming (new or
-late arriving) messages, but that is the correctness
-versus live-lock trade-off we make to get high
-availability. We might timeout, but if we return
-a value, it's a good value.
+The first phase of Paxos then is about
+_recovery_ after crash/reboot and still keeping a
+locked in "chosen" value locked in. We don't
+want it to "break out" and suddenly change its
+value.
+The later is the essential safety property of basic Paxos,
+which is akin to a write-once register. 
+In this analogy, we read the register first to make sure it hasn't
+already been written. Once we successfully
+write to this register, the register's 
+value is locked in, and will never change
+in the future, assuming the protocol is followed.
+We might overwrite the value, but if we do,
+it will be with the same value (just a 
+higher ballot number).
 
-To sum up phase-one emphatically, recovering from previous faults correctly
-must involve dropping (or delaying) a value you want to 
-write in favor of recovering a previously partially-accepted
-or fully accepted value. The other part, the promise mechanism to exclude
-lower-numbered ballots, drives the correctness of 
-the algorithm even in the face of faults (failure/recovery
-of nodes and lost, delayed, re-ordered, or duplicated messages).
+What does a successful write entail? 
+We must get a quorum of acceptors to write the
+same value to stable disk, that value will
+never change in future ballots (for a single
+instance of Paxos), even if we over-write
+it multiple times through the Paxos state
+machine. Once chosen, the value is idempotent to
+higher future Paxos ballots. Lower ones
+are ruled out by the promise-to-ignore
+them mechanism. Of course, higher
+ballots will re-write the same value 
+under a new ballot number, but the chosen value
+itself doesn't change after on-disk acceptance
+by a quorum. That is what allows messages
+to come in late or be duplicated, and not
+mess things up. Nodes can crash and restart,
+and miss messages, but the register is 
+idempotent; locked-in.
+
+So the Paxos protocol prevents changing the
+value once chosen. Interestingly, chosen
+is not a property of a single node, but
+only of any subset of nodes >= quorum. That is, in the 
+original, no single node knows by itself
+that the register has been locked.
+The "reads" and "writes" we discussed
+in the register metaphor were in reality
+parallel interactions with at least a 
+quorum for the reads (in phase one), 
+and a (possibly different) quorum for 
+the write accept phase two.
+
+This suggests a simple local-read/write optimization
+that does not even need leases, and could
+reduce the conflict rate in a leaderless one-Paxos
+instance scheme: 
+the learners (assuming they are colocated
+with the acceptors, as is usually done) could simply
+include a "locked-in", "fixed", or
+"chosen" flag alongside their locally stored value.
+The flag caches 
+whether or not this node's value has seen
+acceptance quorum. Since the chosen value
+cannot change later, it is ideal
+for caching. By turning a quorum property
+into a local flag, reads can be served
+from local storage, and new writes can be rejected
+immediately if the flag is set. 
+
+The learner could simply set the flag once quorum
+is noted. Notice however that not
+all nodes may be up when the learn
+messages come through, so they may
+miss the moment when the flag is
+announced. So the flag never has
+false positivies, but it can have
+false negatives. If the "chosen"
+flag comes back true we can trust it.
+If it comes back false, we cannot.
+If we check our local cache and 
+"chosen" has not been flagged, we
+must proceed to do a full quorum
+read, and then check for the flag.
+Again we can finish early at that
+point if all we are doing is read.
+If the quorum read tells us the
+value is already chosen, we 
+can also short-circuit writes
+at this point. There's little
+point in re-writing the same
+value again at a higher ballot
+number, and there's no point
+in trying to write a different
+value, since it won't work.
+
+How about nodes that were crashed
+when we learned about the chosen status?
+They won't know that a 
+value was chosen, and so won't
+know to set their "chosen flag". Rather than
+run paxos again just
+to read (notice that a quorum read
+would be inconclusive some fraction of the time,
+because you don't get full visibility
+into any possible quorum, just the one you see first.
+Your guarantee with quorums is only that
+there was one node currently that will be common
+in any quorum from the past.
+
+However, if we use the flag optimization
+suggested above, then it would make 
+it much easier for a recovered node to also query
+for the "chosen" flag during prepare,
+since given the quorum from prepare
+at least one response will include
+the flag if a previous quorum
+wrote it to disk, which would
+then be definitive if the flag was set to true.
+
+As above, this allows short-circuiting/avoiding the
+Paxos network costs because we
+can conclude immediately after
+one (parallel to all member) round trip.
+
+For intuition into how the original algorithm was 
+arrived at, see the #on_ballot_numbers
+section at the end of this file for a 
+choice quote from Lamport.
 
 The other two phases are a very straight forward
 version of two-phase commit. You just

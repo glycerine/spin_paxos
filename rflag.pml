@@ -1,11 +1,6 @@
+
 //
-// Promela model of the basic Paxos algorithm.
-// (just Synod, a single round of agreement on one value).
-//
-// This is the optimized version of the promela model.
-// It runs much faster, especially when compiled with -DBITSTATE.
-//
-// * Extracted from the "Model Checking Paxos in Spin" paper
+// * Derived from the "Model Checking Paxos in Spin" paper
 // * by Giorgio Delzanno, Michele Tatarek, and  Riccardo Traverso.
 // * https://arxiv.org/pdf/1408.5962
 //
@@ -46,15 +41,15 @@
 #define MAX (ACCEPTORS*PROPOSERS)
 
 typedef mex{
-  byte  rnd;   // promised (reject lower number proposals)
-  short prnd; // previously accepted round number
-  short pval; // previously accepted value
+  byte  promised;   // promised (reject lower number proposals)
+  short acceptedNum; // previously accepted round number
+  short acceptedVal; // previously accepted value
 }
 
-chan phase1a = [MAX] of {byte, byte}; // to acceptor. recipient identity, ballot.
-chan phase1b = [MAX] of {mex}; 
-chan phase2a = [MAX] of {byte, byte, short};
-chan phase2b = [MAX] of {short, short, short}; // learning
+chan phase1aPrepare = [MAX] of {byte, byte}; // to acceptor. recipient identity, ballot.
+chan phase1bPromise = [MAX] of {mex}; 
+chan phase2aAcceptPlease = [MAX] of {byte, byte, short};
+chan phase2bLearn = [MAX] of {short, short, short}; // learning
 
 //
 // Section 6 of paper, optimized versions of the above.
@@ -63,24 +58,24 @@ chan phase2b = [MAX] of {short, short, short}; // learning
 // a proposer routine
 inline occ(i, pr, count, hr, hv, crnd) {
  d_step{
-  printf("i = %d, len(phase1b)=%d; len(phase1a)=%d\n", i, len(phase1b), len(phase1a));
+  printf("i = %d, len(phase1bPromise)=%d; len(phase1aPrepare)=%d\n", i, len(phase1bPromise), len(phase1aPrepare));
   
   do
-   :: i < len(phase1b) -> 
-     phase1b ? pr; phase1b ! pr;
+   :: i < len(phase1bPromise) -> 
+     phase1bPromise ? pr; phase1bPromise ! pr;
      if
-       :: pr.rnd == crnd ->
+       :: pr.promised == crnd ->
           count++;
           if
-            :: pr.prnd > hr ->
-               hr = pr.prnd; hv= pr.pval;
+            :: pr.acceptedNum > hr ->
+               hr = pr.acceptedNum; hv= pr.acceptedVal;
             :: else
           fi;
        :: else
      fi;
      i++;
   :: else ->
-     pr.prnd =0; pr.pval =0; pr.rnd =0; i=0;
+     pr.acceptedNum =0; pr.acceptedVal =0; pr.promised =0; i=0;
      break;
  od;
  }
@@ -96,12 +91,12 @@ if
   :: count >=MAJORITY ->
      aux =(hr < 0 -> myval : hv); // conditional expression
      // unreached, strange, so try inlining manually:
-     // bcastPhase2a(crnd, aux);
+     // bcastPhase2aAcceptPlease(crnd, aux);
      int k = 1; 
      do
        ::(k <= ACCEPTORS) ->
-          printf("k = %d in bcastPhase2a inline, ACCEPTORs=%d\n", k, ACCEPTORS);
-          phase2a !! k,crnd,aux;
+          printf("k = %d in bcastPhase2aAcceptPlease inline, ACCEPTORs=%d\n", k, ACCEPTORS);
+          phase2aAcceptPlease !! k,crnd,aux;
           k++;
        ::else -> break;
      od
@@ -122,22 +117,22 @@ inline qt(i, pr, count, hr, hv, myval,crnd, aux) {
 proctype proposer_optimized(short crnd; short myval) {
   short aux, hr = -1, hv = -1;
   short rnd;
-  short prnd, pval;
+  short acceptedNum, acceptedVal;
   byte count =0, i = 0;
   mex pr;
   d_step {
   
-    // broadcast phase1a(crnd);
+    // broadcast phase1aPrepare(crnd);
 
     byte j = 1;
     do
      ::(j <= ACCEPTORS) -> 
-        phase1a !! j, crnd;
-        printf("sent on phase1a j=%d, crnd=%d\n", j, crnd);
+        phase1aPrepare !! j, crnd;
+        printf("sent on phase1aPrepare j=%d, crnd=%d\n", j, crnd);
         j++;
      :: else -> break;
     od
-    // end of manually unrolled broadcastPhase1a(crnd);
+    // end of manually unrolled broadcastPhase1aPrepare(crnd);
   } // end of d_step
 end:  do
     :: qt(i, pr, count, hr, hv, myval, crnd, aux);
@@ -147,14 +142,14 @@ end:  do
 
 proctype acceptor_optimized(int id) {
 
-  printf("top of acceptor_optimized, id=%d; len(phase1a)=%d\n", id, len(phase1a));
+  printf("top of acceptor_optimized, id=%d; len(phase1aPrepare)=%d\n", id, len(phase1aPrepare));
   short crnd = -1; // max ballot seen.
-  short prnd = -1, pval = -1;
+  short acceptedNum = -1, acceptedVal = -1;
   short aval, rnd;
   do
     :: d_step {
-         phase1a ?? <eval(id), rnd> ->
-         printf("acceptor id=%d sees phase1a len %d: rnd=%d; crnd=%d\n", id, len(phase1a), rnd, crnd); // len 4, 1, 1. should hold 1,1,2,2
+         phase1aPrepare ?? <eval(id), rnd> ->
+         printf("acceptor id=%d sees phase1aPrepare len %d: rnd=%d; crnd=%d\n", id, len(phase1aPrepare), rnd, crnd); // len 4, 1, 1. should hold 1,1,2,2
          if
            ::(rnd > crnd) -> crnd = rnd;
               //printf("crnd is now %d\n", crnd);
@@ -162,18 +157,18 @@ proctype acceptor_optimized(int id) {
          fi;
          rnd = 0
        }
-       // we have to send back on phase1b, right???
-       phase1b !! crnd, prnd, pval;
-       //printf("phase1a ?? was run, and phase1b ! too\n");
+       // we have to send back on phase1bPromise, right???
+       phase1bPromise !! crnd, acceptedNum, acceptedVal;
+       //printf("phase1aPrepare ?? was run, and phase1bPromise ! too\n");
     :: d_step {
-         phase2a ?? eval(id), rnd, aval ->
+         phase2aAcceptPlease ?? eval(id), rnd, aval ->
          if
            ::(rnd >=crnd) -> // ballot in rnd is >= promised, so commit.
              crnd=rnd;
-             prnd=rnd;
-             pval=aval;
-             phase2b !! id, crnd, aval;
-             printf("acceptor id=%d replied on phase2b\n", id);
+             acceptedNum=rnd;
+             acceptedVal=aval;
+             phase2bLearn !! id, crnd, aval;
+             printf("acceptor id=%d replied on phase2bLearn\n", id);
            :: else
          fi;
          rnd = 0; aval = 0;
@@ -186,8 +181,8 @@ proctype acceptor_optimized(int id) {
 
 inline read_learn_chan_and_assert(id, rnd, lval, lastval, mcount) {
   d_step {
-    phase2b ?? id, rnd, lval ->
-       printf("read_learn read from phase2b: id=%d, rnd=%d, lval=%d\n", id, rnd, lval);
+    phase2bLearn ?? id, rnd, lval ->
+       printf("read_learn read from phase2bLearn: id=%d, rnd=%d, lval=%d\n", id, rnd, lval);
     if
       :: mcount [rnd -1] < MAJORITY ->
            mcount [rnd -1]++;

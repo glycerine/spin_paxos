@@ -179,7 +179,7 @@ proctype acceptor_optimized(int id) {
 }
 
 
-inline read_learn_chan_and_assert(id, rnd, lval, lastval, acceptCount) {
+inline read_learn_chan_and_assert(id, rnd, lval, lastval, acceptCount, done) {
   d_step {
     phase2bLearn ?? id, rnd, lval ->
        printf("read_learn read from phase2bLearn: id = %d, rnd = %d, lval = %d\n", id, rnd, lval);
@@ -212,7 +212,7 @@ active proctype learner_assert_consistency() {
   byte acceptCount[PROPOSERS];
   bool done = false;
 end:  do
-    :: read_learn_chan_and_assert(id, rnd, lval, lastval, acceptCount);
+    :: read_learn_chan_and_assert(id, rnd, lval, lastval, acceptCount, done);
     :: done -> break;
   od
   printf("learner_assert_consistency is done.\n");

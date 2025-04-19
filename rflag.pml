@@ -51,7 +51,7 @@ chan phase2bLearn = [MAX] of {short, short, short}; // learning
 //
 
 // proposer i subroutine in phase 2. pr is a temp var to read promise messages.
-inline accumHighest(i, pr, count, highestAcceptedRound, highestAcceptedValue, curBallot) {
+inline accumHighest(i, pr, count, highestAcceptedRound, highestAcceptedValue, curBallot, nextBallot) {
  d_step{
   printf("i = %d, len(phase1bPromise) = %d; len(phase1aPrepare) = %d\n", i, len(phase1bPromise), len(phase1aPrepare));
   
@@ -67,8 +67,11 @@ inline accumHighest(i, pr, count, highestAcceptedRound, highestAcceptedValue, cu
                    highestAcceptedValue = pr.acceptedVal;
             :: else
           fi;
-       //:: pr.promised > curBallot -> // must abort the round, right? + try higher ballot. this is the proposer, so why bother trying to get a lower number ballot acccepted, acceptors will never take it.
-       //  assert(false); // does this happen? yes. also, acceptors should be rejecting too
+       :: pr.promised > curBallot -> // must abort the round, right? + try higher ballot. this is the proposer, so why bother trying to get a lower number ballot acccepted, acceptors will never take it.
+       //  assert(false); // does this happen? yes. also, acceptors should be rejecting too. they do in that they ignore ballows lower than promisedN
+            printf("proposer sees conflict, incrementing curBallot from %d to %d\n", curBallot, pr.promised+1);
+            nextBallot = pr.promised+1;
+
        :: else
      fi;
      i++;
@@ -102,7 +105,7 @@ inline checkPrepQuorum(count, highestAcceptedRound, highestAcceptedValue,
 }
 
 // a proposer i does phase 2. pr is a promise message.
-inline proposerPhase2(i, pr, count, highestAcceptedRound, highestAcceptedValue, myval,curBallot, aux) {
+inline proposerPhase2(i, pr, count, highestAcceptedRound, highestAcceptedValue, myval,curBallot, aux, nextBallot) {
   atomic {
     accumHighest(i, pr, count, highestAcceptedRound, highestAcceptedValue, curBallot);
     checkPrepQuorum(count, highestAcceptedRound, highestAcceptedValue, myval, curBallot, aux); 
@@ -117,6 +120,9 @@ proctype proposer(short curBallot; short myval) {
   byte count =0, i = 0;
   // pr is a temp variable to read the phase1 promise messages we have received.
   msgPromise pr;
+  short nextBallot = -1;
+  // todo: add do loop here to re-try while no value locked-in
+  // todo: add a locked-in variable so we can terminate asap.
   d_step {
   
     // broadcast phase1aPrepare(curBallot);
@@ -134,7 +140,11 @@ proctype proposer(short curBallot; short myval) {
   
   // begin phase 2, after prepare quorum achieved.
   end: do
-        :: proposerPhase2(i, pr, count, highestAcceptedRound, highestAcceptedValue, myval, curBallot, aux);
+        :: proposerPhase2(i, pr, count, highestAcceptedRound, highestAcceptedValue, myval, curBallot, aux, nextBallot) ->
+             if
+                :: nextBallot >= 0 -> curBallot = nextBallot;
+                :: else
+             fi
        od
 }
 
@@ -148,11 +158,9 @@ proctype acceptor(int id) {
   short acceptThisVal;
   short rnd; // temp var to read round from the channels.
   
-  // where is the promise to ignore lower ballots? is it promisedN?
-  
   do
     :: d_step {
-         // find the highest round so far. store it in promisedN.
+         // find the highest round we have seen so far. store it in promisedN.
          phase1aPrepare ?? <eval(id), rnd> ->
          printf("acceptor id = %d sees phase1aPrepare len %d: rnd = %d; promisedN = %d\n", id, len(phase1aPrepare), rnd, promisedN); // len 4, 1, 1. should hold 1,1,2,2
          if
@@ -179,12 +187,13 @@ proctype acceptor(int id) {
              // this looks wrong. should be sending the rnd, not promisedN.
              //phase2bLearn !! id, promisedN, acceptThisVal;
              phase2bLearn !! id, rnd, acceptThisVal;
-             printf("acceptor id = %d replied on phase2bLearn\n", id);
+             printf("acceptor id = %d replied to rnd = %d; on phase2bLearn\n", id, rnd);
            :: else
+              // ignore ballots lower than promisedN. critical in Paxos.
          fi;
          rnd = 0; acceptThisVal = 0;
-       }
-       break;
+       } // end d_step
+       //break; // implies only one attempt at phase2a here in acceptor.
   od
   printf("end of acceptor id = %d\n", id);
 }

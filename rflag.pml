@@ -1,4 +1,4 @@
-
+// basic one instance of Paxos (aka Synod)
 //
 // * Derived from the "Model Checking Paxos in Spin" paper
 // * by Giorgio Delzanno, Michele Tatarek, and  Riccardo Traverso.
@@ -14,16 +14,10 @@
 // This version: Copyright(C) 2025 by Jason E. Aten, Ph.D.
 // License (kept the same): Creative Commons Attribution License (CC-BY).
 
-/* simple paxos, one round of Synod (herein):
+/* simple paxos, one round of Synod (herein, this is NOT multi-paxos):
    Proposer -> Prepare -> Acceptors
    Acceptors -> Promise -> Proposer
    Proposer -> Accept -> Acceptors
-   Acceptors -> Learn -> Learners
-
-   MultiPaxos:
-   Leader -> Prepare -> Acceptors  (once, at start)
-   Acceptors -> Promise -> Leader
-   Leader -> Accept -> Acceptors   (for each value)
    Acceptors -> Learn -> Learners
 */
 
@@ -47,17 +41,17 @@ typedef msgPromise{
   short acceptedVal; // previously accepted value
 }
 
-chan phase1aPrepare = [MAX] of {byte, byte}; // to acceptor. recipient identity, ballot.
+chan phase1aPrepare = [MAX] of {byte, byte}; // to acceptor i, ballot.
 chan phase1bPromise = [MAX] of {msgPromise}; 
 chan phase2aAcceptPlease = [MAX] of {byte, byte, short};
 chan phase2bLearn = [MAX] of {short, short, short}; // learning
 
 //
-// Section 6 of paper, optimized versions of the above.
+// Section 6 of paper, optimized version
 //
 
-// a proposer subroutine in phase 2
-inline occ(i, pr, count, highestAcceptedRound, highestAcceptedValue, curRound) {
+// proposer i subroutine in phase 2. pr is a temp var to read promise messages.
+inline accumHighest(i, pr, count, highestAcceptedRound, highestAcceptedValue, curRound) {
  d_step{
   printf("i = %d, len(phase1bPromise) = %d; len(phase1aPrepare) = %d\n", i, len(phase1bPromise), len(phase1aPrepare));
   
@@ -69,9 +63,12 @@ inline occ(i, pr, count, highestAcceptedRound, highestAcceptedValue, curRound) {
           count++;
           if
             :: pr.acceptedNum > highestAcceptedRound ->
-               highestAcceptedRound = pr.acceptedNum; highestAcceptedValue = pr.acceptedVal;
+                   highestAcceptedRound = pr.acceptedNum;
+                   highestAcceptedValue = pr.acceptedVal;
             :: else
           fi;
+       //:: pr.promised > curRound -> // must abort the round, right? + try higher ballot
+       //  assert(false); // does this happen? yes. acceptors should be rejecting too
        :: else
      fi;
      i++;
@@ -104,20 +101,21 @@ inline checkPrepQuorum(count, highestAcceptedRound, highestAcceptedValue,
   fi;
 }
 
-// a proposer routine for phase 2
+// a proposer i does phase 2. pr is a promise message.
 inline proposerPhase2(i, pr, count, highestAcceptedRound, highestAcceptedValue, myval,curRound, aux) {
   atomic {
-    occ(i, pr, count, highestAcceptedRound, highestAcceptedValue, curRound);
+    accumHighest(i, pr, count, highestAcceptedRound, highestAcceptedValue, curRound);
     checkPrepQuorum(count, highestAcceptedRound, highestAcceptedValue, myval, curRound, aux); 
     highestAcceptedValue= -1; highestAcceptedRound = -1; count = 0; aux = 0; 
   }
 }
 
-proctype proposer_optimized(short curRound; short myval) {
+proctype proposer(short curRound; short myval) {
   short aux, highestAcceptedRound = -1, highestAcceptedValue = -1;
   short rnd;
   short acceptedNum, acceptedVal;
   byte count =0, i = 0;
+  // pr is a temp variable to read the phase1 promise messages we have received.
   msgPromise pr;
   d_step {
   
@@ -141,36 +139,43 @@ proctype proposer_optimized(short curRound; short myval) {
 }
 
 
-proctype acceptor_optimized(int id) {
+proctype acceptor(int id) {
 
-  printf("top of acceptor_optimized, id = %d; len(phase1aPrepare) = %d\n", id, len(phase1aPrepare));
+  printf("top of acceptor, id = %d; len(phase1aPrepare) = %d\n", id, len(phase1aPrepare));
   
-  short curRound = -1; // max ballot seen.
+  short promisedN = -1; // max ballot seen.
   short acceptedNum = -1, acceptedVal = -1;
-  short acceptThisVal, rnd;
+  short acceptThisVal;
+  short rnd; // temp var to read round from the channels.
+  
+  // where is the promise to ignore lower ballots? is it promisedN?
+  
   do
     :: d_step {
+         // find the highest round so far. store it in promisedN.
          phase1aPrepare ?? <eval(id), rnd> ->
-         printf("acceptor id = %d sees phase1aPrepare len %d: rnd = %d; curRound = %d\n", id, len(phase1aPrepare), rnd, curRound); // len 4, 1, 1. should hold 1,1,2,2
+         printf("acceptor id = %d sees phase1aPrepare len %d: rnd = %d; promisedN = %d\n", id, len(phase1aPrepare), rnd, promisedN); // len 4, 1, 1. should hold 1,1,2,2
          if
-           ::(rnd > curRound) -> curRound = rnd;
-              //printf("curRound is now %d\n", curRound);
+           ::(rnd > promisedN) -> promisedN = rnd;
+              //printf("promisedN is now %d\n", promisedN);
            :: else
          fi;
          rnd = 0
        }
        // we have to send back on phase1bPromise
-       phase1bPromise !! curRound, acceptedNum, acceptedVal;
+       phase1bPromise !! promisedN, acceptedNum, acceptedVal;
        //printf("phase1aPrepare ?? was run, and phase1bPromise ! too\n");
+
+       // why keep running phase 1 once quorum is reached? to allow new rounds.
        
     :: d_step {
          phase2aAcceptPlease ?? eval(id), rnd, acceptThisVal ->
          if
-           ::(rnd >=curRound) -> // ballot in rnd is >= promised, so commit.
-             curRound = rnd;
+           ::(rnd >= promisedN) -> // ballot in rnd is >= promised, so commit.
+             promisedN = rnd;
              acceptedNum = rnd;
              acceptedVal = acceptThisVal;
-             phase2bLearn !! id, curRound, acceptThisVal;
+             phase2bLearn !! id, promisedN, acceptThisVal;
              printf("acceptor id = %d replied on phase2bLearn\n", id);
            :: else
          fi;
@@ -178,7 +183,7 @@ proctype acceptor_optimized(int id) {
        }
        break;
   od
-  printf("end of acceptor_optimized id = %d\n", id);
+  printf("end of acceptor id = %d\n", id);
 }
 
 
@@ -232,15 +237,12 @@ init {
   atomic{  
     int j = 1;
     for (j : 1 .. PROPOSERS) {
-      run proposer_optimized(j, j);
+      run proposer(j, j);
     }
 
     int k = 1;
     for (k : 1 .. ACCEPTORS) {
-      run acceptor_optimized(k);
+      run acceptor(k);
     }
-
-    // if using learn_and_assert_safety, do not also run this:
-    //run learner();
   };
 }

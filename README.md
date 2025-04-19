@@ -540,19 +540,25 @@ prevents multiple spermatozoa from fertilizing it.
 Like the Wakanda force-field shield dome snapping on,
 the very first fusion of sperm and egg says, "shields up!"
 
+![the zona pelucida, like a force field shield](zona_pelucida.png)
+Zona pelucida image from
+https://embryology.med.unsw.edu.au/embryology/index.php/Zona_pellucida
+
 The egg almost instantaneously creates a 
-protection barrier like the earth's
+protection barrier -- not unlike how the earth's
 atmosphere protects it from cosmic rays. The first
 sperm to wiggle through the zona pelucia causes a massive wave
 of calcium release to flash through the plasma of the oocyte,
-signalling to the entire egg surface that the sperm
-has arrived, and inducing changes at the zona pelucida 
+signalling (broadcasting to all receptors) on the entire 
+egg surface that the sperm has arrived, and 
+inducing changes at the zona pelucida 
 that lock out other sperm.
 https://en.wikipedia.org/wiki/Zona_pellucida
 
 
 This is how cells prevent multiple fertilizations,
-aka polyspermy, which would be a genetic disaster. See 
+aka polyspermy, which would be a genetic disaster
+for the just established zygote. See 
 the "Fast and Slow block to polyspermy" in 
 https://en.wikipedia.org/wiki/Oocyte_activation
 https://www.youtube.com/watch?v=BFrVmDgh4v4

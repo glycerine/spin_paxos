@@ -51,7 +51,7 @@ chan phase2bLearn = [MAX] of {short, short, short}; // learning
 //
 
 // proposer i subroutine in phase 2. pr is a temp var to read promise messages.
-inline accumHighest(i, pr, count, highestAcceptedRound, highestAcceptedValue, curBallot, nextBallot) {
+inline accumHighest(i, pr, count, highestAcceptedRound, highestAcceptedValue, curBallot) {
  d_step{
   printf("i = %d, len(phase1bPromise) = %d; len(phase1aPrepare) = %d\n", i, len(phase1bPromise), len(phase1aPrepare));
   
@@ -67,7 +67,7 @@ inline accumHighest(i, pr, count, highestAcceptedRound, highestAcceptedValue, cu
                    highestAcceptedValue = pr.acceptedVal;
             :: else
           fi;
-       :: pr.promised > curBallot ->
+       //:: pr.promised > curBallot ->
             // must abort the round, right? nope!
             // we only need abort if we cannot get quorum. A single
             // minority reject does not stop us.
@@ -76,9 +76,6 @@ inline accumHighest(i, pr, count, highestAcceptedRound, highestAcceptedValue, cu
             // get a lower number ballot acccepted, acceptors will never take it?
             // b/c a majority might be okay with it!
             // good: acceptors do ignore ballows lower than promisedN currently.
-            printf("proposer sees a conflict, incrementing curBallot from %d to %d\n", curBallot, pr.promised+1);
-            nextBallot = pr.promised+1;
-
        :: else
      fi;
      i++;
@@ -111,9 +108,31 @@ inline checkPrepQuorum(count, highestAcceptedRound, highestAcceptedValue,
   fi;
 }
 
+inline checkChosen(chosen, conflictCount) {
+  if
+    :: conflictCount >=MAJORITY ->
+    // todo finish changes!
+    
+         applyVal =(highestAcceptedRound < 0 -> myval : highestAcceptedValue); 
+         // manually inlined bcastPhase2aAcceptPlease(curBallot, applyVal)...
+         int k = 1; 
+         do
+           ::(k <= ACCEPTORS) ->
+              printf("k = %d in bcastPhase2aAcceptPlease inline, ACCEPTORs=%d\n", k, ACCEPTORS);
+              phase2aAcceptPlease !! k, curBallot, applyVal;
+              k++;
+           ::else -> break;
+         od
+         break;
+    :: else
+  fi;
+}
+
+
 // a proposer i does phase 2. pr is a promise message.
-inline proposerPhase2(i, pr, count, highestAcceptedRound, highestAcceptedValue, myval,curBallot, aux, nextBallot) {
+inline proposerPhase2(i, pr, count, highestAcceptedRound, highestAcceptedValue, myval,curBallot, aux, chosen) {
   atomic {
+    checkChosen(chosen);
     accumHighest(i, pr, count, highestAcceptedRound, highestAcceptedValue, curBallot);
     checkPrepQuorum(count, highestAcceptedRound, highestAcceptedValue, myval, curBallot, aux); 
     highestAcceptedValue= -1; highestAcceptedRound = -1; count = 0; aux = 0; 
@@ -127,7 +146,8 @@ proctype proposer(short curBallot; short myval) {
   byte count =0, i = 0;
   // pr is a temp variable to read the phase1 promise messages we have received.
   msgPromise pr;
-  short nextBallot = -1;
+
+  bool chosen;
   // todo: add do loop here to re-try while no value locked-in
   // todo: add a locked-in variable so we can terminate asap.
   d_step {
@@ -147,9 +167,14 @@ proctype proposer(short curBallot; short myval) {
   
   // begin phase 2, after prepare quorum achieved.
   end: do
-        :: proposerPhase2(i, pr, count, highestAcceptedRound, highestAcceptedValue, myval, curBallot, aux, nextBallot) ->
+        :: proposerPhase2(i, pr, count, highestAcceptedRound, highestAcceptedValue, myval, curBallot, aux, chosen) ->
              if
-                :: nextBallot >= 0 -> curBallot = nextBallot;
+                :: chosen ->
+                       printf("chosen true. proposer %d stopping.\n", myval);
+                       break;
+                :: !chosen && conflictCount >= MAJORITY ->
+                       printf("proposer %d conflicted out. on to next round %d\n", myval, curBallot + PROPOSERS);
+                       curBallot = curBallot + PROPOSERS;
                 :: else
              fi
        od

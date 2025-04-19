@@ -531,45 +531,81 @@ higher than your current ballot.
 On livelock prevention: "Wakanda Force-field Dome Up!"
 --------
 
-I'm thinking about the way an unfertilized egg
-prevents multiple spermatozoa from fertilizing it.
-Like the Wakanda force-field shield dome snapping on,
-creating a protection barrier like the earth's
-atmosphere protects it from cosmic rays, the first
-sperm to wiggle through causes a massive wave
-of calcium to flash around the egg's cell membrane,
-locking out all other sperm. (Biology is amazing.
-This is how cells prevent multiple fertilizations,
-which would be a genetic disaster.)
+A consensus example (a write once register) from biology
+serves as inspiration.
 
-The strangest thing about the paxos livelock of dueling
-proposers is that it feels entirely pointless and unwarranteed.
+I'm thinking about the way an unfertilized oocyte
+prevents multiple spermatozoa from fertilizing it.
+
+Like the Wakanda force-field shield dome snapping on,
+the very first fusion of sperm and egg says, "shields up!"
+
+The egg almost instantaneously creates a 
+protection barrier like the earth's
+atmosphere protects it from cosmic rays. The first
+sperm to wiggle through the zona pelucia causes a massive wave
+of calcium release to flash through the plasma of the oocyte,
+signalling to the entire egg surface that the sperm
+has arrived, and inducing changes at the zona pelucida 
+that lock out other sperm.
+https://en.wikipedia.org/wiki/Zona_pellucida
+
+
+This is how cells prevent multiple fertilizations,
+aka polyspermy, which would be a genetic disaster. See 
+the "Fast and Slow block to polyspermy" in 
+https://en.wikipedia.org/wiki/Oocyte_activation
+https://www.youtube.com/watch?v=BFrVmDgh4v4
+https://www.youtube.com/watch?v=n036ktJ9_ro
+
+Back to Paxos
+
+The strangest thing about the basic single instance 
+Paxos livelock of dueling proposers is that it feels 
+entirely pointless and unwarranteed,
+as it makes no attempt by default to block other
+proposers after the first, even for a few moments.
 
 Review the 23-8 figure above again. 
-Shouldn't we at least let the first proposer
-try to finish his business before interrupting him?
+
+Shouldn't we at least let the first proposer to arrive
+try to finish their business before interrupting them?
 
 Why not just start a timer when you get a proposal, and
-reject any other proposer until the timer expires. 
-Lets call it "automatic leasing" -- which is nice
-because no renewals are needed. We could 
-shorten it to auto-leasing, but then we sound
-like a used car sales lot! fifo-leasing with queuing
-sounds more neutral. Just like how a
-lease is a lock with automatic timeout, the
-fifo-leasing is like a mutex or monitor: we
-have a queue in the background.
+reject any other proposer until the timer expires?
+The first proposer can of course fail at any time
+and cease to finish his round. So we cannot wait
+on them forever.
 
-First come, first served. In this fifo-leasing scheme,
-the proposer doesn't even need manage leases/be aware
-that they have a lease.
+Lets call it "automatic leasing" -- which is appealing
+because no renewals are needed. (I implemented
+leases and lease renewal at one point... and Ugh. I tore it out
+about because of the large added complexity).
+If you can do without leasing, the protocol is 
+much simpler, and should yield more easily to verification.
+
+We could shorten "automatic leasing" to "auto-leasing", 
+but then it sounds like a used car sales lot. Let's
+find a different name.
+
+"Fifo-leasing with queuing" sounds better. Just like how a
+lease is a lock with automatic timeout, fifo-leasing 
+is like a mutex or monitor: we have a queue in the background,
+and the currently active propser has a lease whose
+timeout signals we should let the next proposer try.
+
+First come, first served: In this fifo-leasing scheme,
+the proposer doesn't even need to manage leases or be aware
+that they have a lease. This simplicity is great,
+especially because no leader election needed.
 
 In fact the acceptor could just delay responding
 to any conflicting proposal until the first
 proposer completes, or their timer expires.
 For fairness, the acceptor can then respond to
-the next proposer in their queue, in FIFO order.
-
+the next proposer in their queue, in FIFO order,
+providing some degree of fairness while
+stopping many pointless dueling livelocks.
 
 
 3. "Revisiting The Paxos Algorithm" by Roberto De Prisco,

@@ -67,9 +67,16 @@ inline accumHighest(i, pr, count, highestAcceptedRound, highestAcceptedValue, cu
                    highestAcceptedValue = pr.acceptedVal;
             :: else
           fi;
-       :: pr.promised > curBallot -> // must abort the round, right? + try higher ballot. this is the proposer, so why bother trying to get a lower number ballot acccepted, acceptors will never take it.
-       //  assert(false); // does this happen? yes. also, acceptors should be rejecting too. they do in that they ignore ballows lower than promisedN
-            printf("proposer sees conflict, incrementing curBallot from %d to %d\n", curBallot, pr.promised+1);
+       :: pr.promised > curBallot ->
+            // must abort the round, right? nope!
+            // we only need abort if we cannot get quorum. A single
+            // minority reject does not stop us.
+            
+            // this is the proposer, so why bother trying to
+            // get a lower number ballot acccepted, acceptors will never take it?
+            // b/c a majority might be okay with it!
+            // good: acceptors do ignore ballows lower than promisedN currently.
+            printf("proposer sees a conflict, incrementing curBallot from %d to %d\n", curBallot, pr.promised+1);
             nextBallot = pr.promised+1;
 
        :: else

@@ -28,7 +28,8 @@
 */
 
 #define ACCEPTORS 3
-#define PROPOSERS 3
+#define PROPOSERS 3   // 2 sec
+//define PROPOSERS 5  // 181 sec
 
 // Normal (should not be faulty).
 #define MAJORITY (ACCEPTORS / 2 + 1)
@@ -143,6 +144,7 @@ proctype proposer_optimized(short curRound; short myval) {
 proctype acceptor_optimized(int id) {
 
   printf("top of acceptor_optimized, id = %d; len(phase1aPrepare) = %d\n", id, len(phase1aPrepare));
+  
   short curRound = -1; // max ballot seen.
   short acceptedNum = -1, acceptedVal = -1;
   short acceptThisVal, rnd;
@@ -160,6 +162,7 @@ proctype acceptor_optimized(int id) {
        // we have to send back on phase1bPromise
        phase1bPromise !! curRound, acceptedNum, acceptedVal;
        //printf("phase1aPrepare ?? was run, and phase1bPromise ! too\n");
+       
     :: d_step {
          phase2aAcceptPlease ?? eval(id), rnd, acceptThisVal ->
          if
@@ -179,43 +182,50 @@ proctype acceptor_optimized(int id) {
 }
 
 
-inline read_learn_chan_and_assert(id, rnd, lval, lastval, acceptCount, done) {
+inline read_learn_chan_assert(id, rnd, lval, lastval, acceptCount, done) {
   d_step {
     phase2bLearn ?? id, rnd, lval ->
        printf("read_learn read from phase2bLearn: id = %d, rnd = %d, lval = %d\n", id, rnd, lval);
     if
-      :: acceptCount [rnd -1] < MAJORITY ->
-           acceptCount [rnd -1]++;
+      :: acceptCount[rnd -1] < MAJORITY ->
+           acceptCount[rnd -1]++;
            printf("read_learn: id = %d, rnd = %d, %d < MAJ\n", id, rnd, acceptCount[rnd-1]);
       :: else
     fi;
     if
-      :: acceptCount [rnd -1] >= MAJORITY ->
+      :: acceptCount[rnd -1] >= MAJORITY ->
            printf("read_learn: id = %d, acceptCount = %d >= MAJ\n", id, acceptCount[rnd-1]);      
          if :: (lastval >= 0 && lastval != lval) ->
                  printf("assert error: lastval: %d != lval: %d\n", lastval, lval);
-                 assert(false); // equiv to assert(lastval == lval)
-            :: (lastval == -1) -> lastval = lval;
+                 assert(false); // equiv to assert(lastval < 0 || lastval == lval)
+            :: (lastval == -1) -> lastval = lval; // free to chose it.
             :: else
          fi
-         done = true;  // Exit after learning a value
+         // I don't think we should do this; we want to keep checking
+         // safety on past the first value that we learn...
+         // done = true;  // Exit after learning a value
       :: else
     fi;
     id = 0; rnd = 0; lval = 0;
   }
 }
 
-// Active learner process that checks for
-// consistency (asserts inside read_learn_chan_and_assert).
-active proctype learner_assert_consistency() {
-  short lastval = -1, id, rnd, lval;
-  byte acceptCount[PROPOSERS];
+// Active learner process that checks for safety:
+// that only a single consistent value is chosen.
+// The asserts are inside read_learn_chan_assert().
+//
+active proctype learn_and_assert_safety() {
+
+  short lastval = -1, id, rnd, learnedValue;
+
+  // per round, is this enough if we have conflicts+restarts?
+  byte acceptCount[PROPOSERS]; 
   bool done = false;
-end:  do
-    :: read_learn_chan_and_assert(id, rnd, lval, lastval, acceptCount, done);
-    :: done -> break;
-  od
-  printf("learner_assert_consistency is done.\n");
+  end:  do
+          :: read_learn_chan_assert(id, rnd, learnedValue, lastval, acceptCount, done);
+          :: done -> break;
+        od
+  printf("learn_and_assert_safety is done.\n");
 }
 
 init {
@@ -230,7 +240,7 @@ init {
       run acceptor_optimized(k);
     }
 
-    // if using learner_assert_consistency, do not also run this:
+    // if using learn_and_assert_safety, do not also run this:
     //run learner();
   };
 }

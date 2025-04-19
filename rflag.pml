@@ -51,7 +51,7 @@ chan phase2bLearn = [MAX] of {short, short, short}; // learning
 //
 
 // proposer i subroutine in phase 2. pr is a temp var to read promise messages.
-inline accumHighest(i, pr, count, highestAcceptedRound, highestAcceptedValue, curRound) {
+inline accumHighest(i, pr, count, highestAcceptedRound, highestAcceptedValue, curBallot) {
  d_step{
   printf("i = %d, len(phase1bPromise) = %d; len(phase1aPrepare) = %d\n", i, len(phase1bPromise), len(phase1aPrepare));
   
@@ -59,7 +59,7 @@ inline accumHighest(i, pr, count, highestAcceptedRound, highestAcceptedValue, cu
    :: i < len(phase1bPromise) ->    // can we move to phase 2, sending acceptPlease?
      phase1bPromise ? pr; phase1bPromise ! pr; // read+replace minimizes state changes
      if
-       :: pr.promised == curRound ->
+       :: pr.promised == curBallot ->
           count++;
           if
             :: pr.acceptedNum > highestAcceptedRound ->
@@ -67,7 +67,7 @@ inline accumHighest(i, pr, count, highestAcceptedRound, highestAcceptedValue, cu
                    highestAcceptedValue = pr.acceptedVal;
             :: else
           fi;
-       //:: pr.promised > curRound -> // must abort the round, right? + try higher ballot
+       //:: pr.promised > curBallot -> // must abort the round, right? + try higher ballot
        //  assert(false); // does this happen? yes. acceptors should be rejecting too
        :: else
      fi;
@@ -83,16 +83,16 @@ inline accumHighest(i, pr, count, highestAcceptedRound, highestAcceptedValue, cu
 // the phase 1 majority is detected.
 //
 inline checkPrepQuorum(count, highestAcceptedRound, highestAcceptedValue,
-                       myval, curRound, applyVal) {
+                       myval, curBallot, applyVal) {
   if
     :: count >=MAJORITY ->
          applyVal =(highestAcceptedRound < 0 -> myval : highestAcceptedValue); 
-         // manually inlined bcastPhase2aAcceptPlease(curRound, applyVal)...
+         // manually inlined bcastPhase2aAcceptPlease(curBallot, applyVal)...
          int k = 1; 
          do
            ::(k <= ACCEPTORS) ->
               printf("k = %d in bcastPhase2aAcceptPlease inline, ACCEPTORs=%d\n", k, ACCEPTORS);
-              phase2aAcceptPlease !! k, curRound, applyVal;
+              phase2aAcceptPlease !! k, curBallot, applyVal;
               k++;
            ::else -> break;
          od
@@ -102,15 +102,15 @@ inline checkPrepQuorum(count, highestAcceptedRound, highestAcceptedValue,
 }
 
 // a proposer i does phase 2. pr is a promise message.
-inline proposerPhase2(i, pr, count, highestAcceptedRound, highestAcceptedValue, myval,curRound, aux) {
+inline proposerPhase2(i, pr, count, highestAcceptedRound, highestAcceptedValue, myval,curBallot, aux) {
   atomic {
-    accumHighest(i, pr, count, highestAcceptedRound, highestAcceptedValue, curRound);
-    checkPrepQuorum(count, highestAcceptedRound, highestAcceptedValue, myval, curRound, aux); 
+    accumHighest(i, pr, count, highestAcceptedRound, highestAcceptedValue, curBallot);
+    checkPrepQuorum(count, highestAcceptedRound, highestAcceptedValue, myval, curBallot, aux); 
     highestAcceptedValue= -1; highestAcceptedRound = -1; count = 0; aux = 0; 
   }
 }
 
-proctype proposer(short curRound; short myval) {
+proctype proposer(short curBallot; short myval) {
   short aux, highestAcceptedRound = -1, highestAcceptedValue = -1;
   short rnd;
   short acceptedNum, acceptedVal;
@@ -119,22 +119,22 @@ proctype proposer(short curRound; short myval) {
   msgPromise pr;
   d_step {
   
-    // broadcast phase1aPrepare(curRound);
+    // broadcast phase1aPrepare(curBallot);
 
     byte j = 1;
     do
      ::(j <= ACCEPTORS) -> 
-        phase1aPrepare !! j, curRound;
-        printf("sent on phase1aPrepare j = %d, curRound = %d\n", j, curRound);
+        phase1aPrepare !! j, curBallot;
+        printf("sent on phase1aPrepare j = %d, curBallot = %d\n", j, curBallot);
         j++;
      :: else -> break; // we have prepare quorum.
     od
-    // end of manually unrolled broadcastPhase1aPrepare(curRound);
+    // end of manually unrolled broadcastPhase1aPrepare(curBallot);
   } // end of d_step
   
   // begin phase 2, after prepare quorum achieved.
   end: do
-        :: proposerPhase2(i, pr, count, highestAcceptedRound, highestAcceptedValue, myval, curRound, aux);
+        :: proposerPhase2(i, pr, count, highestAcceptedRound, highestAcceptedValue, myval, curBallot, aux);
        od
 }
 
@@ -166,16 +166,19 @@ proctype acceptor(int id) {
        phase1bPromise !! promisedN, acceptedNum, acceptedVal;
        //printf("phase1aPrepare ?? was run, and phase1bPromise ! too\n");
 
-       // why keep running phase 1 once quorum is reached? to allow new rounds.
+       // why keep running phase 1 once quorum is reached? to allow new rounds, we think
        
     :: d_step {
          phase2aAcceptPlease ?? eval(id), rnd, acceptThisVal ->
          if
-           ::(rnd >= promisedN) -> // ballot in rnd is >= promised, so commit.
+           ::(rnd >= promisedN) -> // ballot in rnd is >= promised, so accept.
              promisedN = rnd;
              acceptedNum = rnd;
              acceptedVal = acceptThisVal;
-             phase2bLearn !! id, promisedN, acceptThisVal;
+
+             // this looks wrong. should be sending the rnd, not promisedN.
+             //phase2bLearn !! id, promisedN, acceptThisVal;
+             phase2bLearn !! id, rnd, acceptThisVal;
              printf("acceptor id = %d replied on phase2bLearn\n", id);
            :: else
          fi;

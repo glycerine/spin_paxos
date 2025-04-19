@@ -528,6 +528,50 @@ a conflict message--in yet another optimization atop
 the baseline; there are so many of these!) if you run into a number 
 higher than your current ballot.
 
+On livelock prevention: "Wakanda Force-field Dome Up!"
+--------
+
+I'm thinking about the way an unfertilized egg
+prevents multiple spermatozoa from fertilizing it.
+Like the Wakanda force-field shield dome snapping on,
+creating a protection barrier like the earth's
+atmosphere protects it from cosmic rays, the first
+sperm to wiggle through causes a massive wave
+of calcium to flash around the egg's cell membrane,
+locking out all other sperm. (Biology is amazing.
+This is how cells prevent multiple fertilizations,
+which would be a genetic disaster.)
+
+The strangest thing about the paxos livelock of dueling
+proposers is that it feels entirely pointless and unwarranteed.
+
+Review the 23-8 figure above again. 
+Shouldn't we at least let the first proposer
+try to finish his business before interrupting him?
+
+Why not just start a timer when you get a proposal, and
+reject any other proposer until the timer expires. 
+Lets call it "automatic leasing" -- which is nice
+because no renewals are needed. We could 
+shorten it to auto-leasing, but then we sound
+like a used car sales lot! fifo-leasing with queuing
+sounds more neutral. Just like how a
+lease is a lock with automatic timeout, the
+fifo-leasing is like a mutex or monitor: we
+have a queue in the background.
+
+First come, first served. In this fifo-leasing scheme,
+the proposer doesn't even need manage leases/be aware
+that they have a lease.
+
+In fact the acceptor could just delay responding
+to any conflicting proposal until the first
+proposer completes, or their timer expires.
+For fairness, the acceptor can then respond to
+the next proposer in their queue, in FIFO order.
+
+
+
 3. "Revisiting The Paxos Algorithm" by Roberto De Prisco,
 Masters Thesis, MIT, 1997.
 

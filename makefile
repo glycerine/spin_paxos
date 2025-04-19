@@ -19,3 +19,13 @@ unopt: # un-optimized version (see 'all', above, for much faster version)
 	./pan -E | tee log.pan  ## pan -i -E to find minimal example
 	@(! test -f unopt.pml.trail || (./pan -r unopt.pml.trail ; false))
 	@grep "Warning:\ Search\ not\ completed" log.pan || echo "good: search was completed."
+
+rflag: # optimized version
+	rm -f pan pan.c pan.b pan.h pan.m pan.p pan.t rflag.pml.trail log.pan
+	spin -a rflag.pml
+	##gcc -O2 -DSAFETY -DREACH -o pan pan.c
+	##gcc -O2 -DSAFETY -o pan pan.c
+	gcc -O2 -DSAFETY -DBITSTATE -o pan pan.c
+	./pan -E | tee log.pan  ## pan -i -E to find minimal example
+	@(! test -f rflag.pml.trail || (./pan -r rflag.pml.trail ; false))
+	@grep "Warning:\ Search\ not\ completed" log.pan || echo "good: search was completed."

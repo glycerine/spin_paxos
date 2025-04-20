@@ -550,15 +550,15 @@ atmosphere protects it from cosmic rays. The first
 sperm to wiggle through the zona pelucia causes a massive wave
 of calcium release to flash through the plasma of the oocyte,
 signalling (broadcasting to all receptors) on the entire 
-egg surface that the sperm has arrived, and 
-inducing changes at the zona pelucida 
-that lock out other sperm.
+egg surface that the first sperm has arrived, and 
+inducing depolarization at the zona pelucida 
+that locks out other sperm. This is called the fast block
+to polyspermy.
 https://en.wikipedia.org/wiki/Zona_pellucida
-
 
 This is how cells prevent multiple fertilizations,
 aka polyspermy, which would be a genetic disaster
-for the just established zygote. See 
+(almost invariably lethal) for the just established zygote. See 
 the "Fast and Slow block to polyspermy" in 
 https://en.wikipedia.org/wiki/Oocyte_activation
 https://www.youtube.com/watch?v=BFrVmDgh4v4

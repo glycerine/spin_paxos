@@ -816,7 +816,13 @@ than we need (EPaxos tries hard to avoid it,
 for WAN optimization), but it does ensure correctness
 and might be the simplest among possible solutions.
 EPaxos adds alot of complexity, and as above, we are
-still not sure that it is correct.
+still not sure that it is correct. Leader election
+in Raft is equivalent to a full Paxos round,
+since the request for votes is the prepare 1a
+phase, and any new leader must immediately
+commit an entry to its log, completing the 2a
+accept phase. See the discussion of Raft below
+for other reasons to like it.
 
 3. "Revisiting The Paxos Algorithm" by Roberto De Prisco,
 Masters Thesis, MIT, 1997.

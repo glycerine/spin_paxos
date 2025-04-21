@@ -914,7 +914,8 @@ I would have to say this to try and persuade
 you to use Raft for your Czar or master for
 handling configuration of itself and for a
 larger cluster. The Raft approach
-is safe, sane, proven and has an easy
+is safe, sane, proven and has an easy (well
+if not easy, at least complete and proven)
 recipe for implementation. The Paxos
 based approaches to reconfiguration are sketched
 without proofs, not well thought out, 

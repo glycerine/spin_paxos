@@ -991,7 +991,7 @@ for, whose changes could be arbitrary).
 https://github.com/ongardie/dissertation https://raft.github.io/
 
 ![rafting.png](rafting.png)
-image caption: White water rafting with an even number is
+Image caption: White water rafting with an even number is
 especially dangerous, since split votes are common. We
 need to add a fifth node in the middle of the river.
 

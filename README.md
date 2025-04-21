@@ -797,11 +797,11 @@ affecting our choices. "Configurability" should
 be a foundational metric for judging algorithms; it
 is a central and critical property that most
 Paxos variant papers just don't address well,
-if they address it at all.
-Jump on the raft, and survive turbulent waters
-when the cluster membership changes. Because
-machines fail all the time, you'll need this features
-much sooner than you think.
+if they address it at all. Because machines 
+fail all the time, you'll need this feature
+much sooner than you think. Jump on the raft, 
+and survive turbulent waters
+when the cluster membership changes. 
 
 ------------
 

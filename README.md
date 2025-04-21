@@ -773,7 +773,7 @@ all clusters -- all real clusters need reconfiguration in
 reality as nodes die and need replacement),
 you either shut it all down and fix it all at
 once, taking a large service window (outage),
-and involves manual operator, or you find 
+and involving a manual syadmin, or you find 
 an automatic online reconfiguration 
 protocol that actually has a theoretical and
 machine checked safety proofs.
@@ -781,8 +781,27 @@ After doing the research, the clear vote is for Raft.
 To me, having solid reconfiguration just over rules
 any other (performance) concern. If I'm
 just looking to provide a replication Czar
-or master for other services, Raft is brilliant.
-Jump on the raft, and survive these turbulent waters.
+or master for other services, performance is
+not on the hot path, and storage concerns
+are irrelevant for the tiny amount of state
+involved in configuration. So to answer
+Alex's query about what is Raft the best at?
+
+Raft is the best at re-configuration. We've got
+to maintain and update membership, and Raft
+actually has an integrated, sane, proven 
+approach. Sure this isn't a steady state property, 
+it isn't on the hot data path, but that doesn't
+make it less worthy of consideration or of
+affecting our choices. "Configurability" should
+be a foundational metric for judging algorithms; it
+is a central and critical property that most
+Paxos variant papers just don't address well,
+if they address it at all.
+Jump on the raft, and survive turbulent waters
+when the cluster membership changes. Because
+machines fail all the time, you'll need this features
+much sooner than you think.
 
 ------------
 

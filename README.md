@@ -964,7 +964,7 @@ taking responsibility and solving it itself.
 
 We've got to maintain and update membership, 
 so delegrating the real work elsewhere just adds
-dependencies and to my think, is a cheap ducking
+dependencies and to my thinking, is a cheap ducking
 of responsibility.
 Raft actually has an integrated, sane, proven 
 approach to reconfiguration. Sane reconfig isn't a 
@@ -974,8 +974,8 @@ worthy of consideration or of
 affecting our choices. 
 
 In discussions of configuration there can be two clusters
-being talked about, and this is a distinction that
-can get lost in Alex's argument. There is
+being talked about, and this is a subtle distinction that
+I didn't perceive at first in reading Alex's argument. There is
 the five node central Chubby/etcd cluster itself, and then
 there is the larger cluster that depends on it.
 For my purposes, and conclusions, I have small clusters, 
@@ -990,7 +990,7 @@ is a central and critical property that most
 Paxos variant papers just don't address well,
 if they address it at all. Because machines 
 fail all the time, you'll need this feature
-much sooner than you think. Jump on the raft, 
+much sooner than you think. Jump on the Raft, 
 and survive turbulent waters
 when the cluster membership changes. 
 

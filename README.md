@@ -802,7 +802,7 @@ and if that acceptor fails before it gets to it,
 then the delay becomes a dropped message. So
 fifo auto leases preserves correctness (safety),
 but only assuming a quorum knows about the fifo-lease, and 
-has promised to repsect it. This motivates why
+has promised to respect it. This motivates why
 any lease has to go through the consensus process
 itself to become established with a quorum. We
 cannot assume anything based on a non-quorum fifo

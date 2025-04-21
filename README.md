@@ -984,8 +984,10 @@ for, whose changes could be arbitrary).
 >   -- Ongaro 2014, Raft dissertaion Abstract, page iv.
 
 
-![white_water_rafting.png](white_water_rafting.png)
-White water rafting image from https://www.checkyeti.com/blog/en/rafting
+![rafting.png](rafting.png)
+White water rafting with an even number is
+especially dangerous, since split votes are common. We
+need to add a fifth node in the middle of the river.
 
 We've got to maintain and update membership, 
 so delegrating the real work elsewhere just adds

@@ -928,7 +928,7 @@ He acknowledges this in the blog:
 > service to lean on."
 
 ![raft image from https://transactional.blog/talk/enough-with-all-the-raft](raft_self_manges_and_supports_high_contention.png)
-Above, raft image from https://transactional.blog/talk/enough-with-all-the-raft
+Above, Raft image from https://transactional.blog/talk/enough-with-all-the-raft
 
 Raft is the best at re-configuration, in my mind, 
 not in small part because it is a stand alone solution. 
@@ -945,7 +945,20 @@ approach to reconfiguration. Sane reconfig isn't a
 steady state property, it isn't on the hot 
 data path, but that doesn't make it less 
 worthy of consideration or of
-affecting our choices. "Configurability" should
+affecting our choices. 
+
+In discussions of configuration there can be two clusters
+being talked about, and this is a distinction that
+can get lost in Alex's argument. There is
+the five node central Chubby/etcd cluster itself, and then
+there is the larger cluster that depends on it.
+For my purposes, and conclusions, I have small clusters, 
+and want simplicity, so I'm merging them into the same set of service nodes.
+Note this is optional, much simpler, but not scalable
+to a > 9 node cluster. Its not hard to separate out again
+the roles, when need be.
+
+To sum up, "configurability" should
 be a foundational metric for judging algorithms; it
 is a central and critical property that most
 Paxos variant papers just don't address well,

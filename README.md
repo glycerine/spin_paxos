@@ -976,8 +976,8 @@ server for other protocols, this is the exact
 use case, and thus strongly argues for Raft. 
 In order to minimize dependencies, I don't want 
 an external configuration service. Everything
-is going to contend on the state of the configuration,
-so livelocking on that would be bad.
+is going to contend on the state of the larger
+cluster's configuration, so livelocking on that would be bad.
 
 Note that a limitation is that the Raft protocol
 only allows the addition of a single node

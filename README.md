@@ -927,6 +927,9 @@ He acknowledges this in the blog:
 > replication needs some external consensus 
 > service to lean on."
 
+![raft image from https://transactional.blog/talk/enough-with-all-the-raft](raft_self_manges_and_supports_high_contention.png)
+Above, raft image from https://transactional.blog/talk/enough-with-all-the-raft
+
 Raft is the best at re-configuration, in my mind, 
 not in small part because it is a stand alone solution. 
 It does not push the problem off to another 

@@ -954,7 +954,7 @@ He acknowledges this in the blog:
 > service to lean on."
 
 ![raft image from https://transactional.blog/talk/enough-with-all-the-raft](raft_self_manges_and_supports_high_contention.png)
-Above, Raft image from https://transactional.blog/talk/enough-with-all-the-raft
+Above, Raft venn diagram from https://transactional.blog/talk/enough-with-all-the-raft
 
 Raft is the best at re-configuration, in my mind, 
 not in small part because it is a stand alone solution. 

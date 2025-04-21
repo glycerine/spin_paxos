@@ -915,13 +915,33 @@ not on the hot path, and storage concerns
 are irrelevant for the tiny amount of state
 involved in configuration. So to answer
 Alex's query about what is Raft the best at?
+Reconfiguration.
 
-Raft is the best at re-configuration. We've got
-to maintain and update membership, and Raft
-actually has an integrated, sane, proven 
-approach. Sure this isn't a steady state property, 
-it isn't on the hot data path, but that doesn't
-make it less worthy of consideration or of
+He acknowledges this in the blog:
+
+> "There is a correct counter-argument here, 
+> and it’s that you cannot solve consensus with 
+> two failures using three nodes. So when raft 
+> is electing a new leader or changing its replicas, 
+> it can do that itself. Reconfiguration-based 
+> replication needs some external consensus 
+> service to lean on."
+
+Raft is the best at re-configuration, in my mind, 
+not in small part because it is a stand alone solution. 
+It does not push the problem off to another 
+external (Paxos) service rather than 
+taking responsibility and solving it itself.
+
+We've got to maintain and update membership, 
+so delegrating the real work elsewhere just adds
+dependencies and to my think, is a cheap ducking
+of responsibility.
+Raft actually has an integrated, sane, proven 
+approach to reconfiguration. Sane reconfig isn't a 
+steady state property, it isn't on the hot 
+data path, but that doesn't make it less 
+worthy of consideration or of
 affecting our choices. "Configurability" should
 be a foundational metric for judging algorithms; it
 is a central and critical property that most

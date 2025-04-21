@@ -775,7 +775,7 @@ you either shut it all down and fix it all at
 once, taking a large service window (outage),
 and involving a manual syadmin, or you find 
 an automatic online reconfiguration 
-protocol that actually has a theoretical and
+protocol that actually has theoretical and
 machine checked safety proofs.
 After doing the research, the clear vote is for Raft.
 To me, having solid reconfiguration just over rules

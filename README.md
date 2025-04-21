@@ -620,18 +620,11 @@ How about nodes that were crashed
 when we learned about the chosen status?
 They won't know that a 
 value was chosen, and so won't
-know to set their "chosen flag". Rather than
-run paxos again just
-to read (notice that a quorum read
-would be inconclusive some fraction of the time,
-because you don't get full visibility
-into any possible quorum, just the one you see first.
-Your guarantee with quorums is only that
-there was one node currently that will be common
-in any quorum from the past.
-
-However, if we use the flag optimization
-suggested above, then it would make 
+know to set their "chosen flag".
+Thus they might run a round on recovery
+to find out.
+If we use the flag optimization
+suggested above, then this makes
 it much easier for a recovered node to also query
 for the "chosen" flag during prepare,
 since given the quorum from prepare
@@ -639,9 +632,21 @@ at least one response will include
 the flag if a previous quorum
 wrote it to disk, which would
 then be definitive if the flag was set to true.
+There is a race for the query to happen
+after the chosen moment and before the
+learners write the flag, so the
+recoverying minor node might end up doing
+the full round and re-writing the same
+value, but the algorithm guarantees
+the re-write will indeed be the same
+value that was chosen. The flag just
+avoids this extra round except in this
+rare race condition; but the recovery
+process must be prepared to finish
+out the full round of single decree Paxos.
 
 As above, this allows short-circuiting/avoiding the
-Paxos network costs because we
+Paxos network costs (most all of the time) because we
 can conclude immediately after
 one (parallel to all member) round trip.
 
@@ -654,7 +659,7 @@ The other two phases are a very straight forward
 version of two-phase commit. You just
 have to remember to not respond (or respond with
 a conflict message--in yet another optimization atop
-the baseline; there are so many of these!) if you run into a number 
+the baseline; there are so many of these!) if you run into a promise
 higher than your current ballot.
 
 On livelock prevention: "Wakanda Force-field Dome Up!"
@@ -700,6 +705,8 @@ Paxos livelock of dueling proposers is that it feels
 entirely pointless and unwarranteed,
 as it makes no attempt by default to block other
 proposers after the first, even for a few moments.
+Again we are pre-viewing the motivation for leases
+and leaders.
 
 Review the 23-8 figure above again. 
 
@@ -742,7 +749,7 @@ the next proposer in their queue, in FIFO order,
 providing some degree of fairness while
 stopping many pointless dueling livelocks.
 
-I suppose the difficulty arrises with not
+The difficulty arrises with not
 all acceptors agreeing on which of competiting "first"
 prepares that each arrive at first 
 different acceptors, having come from different
@@ -763,7 +770,9 @@ in Paxos, any change that is equivalent to
 dropping or delaying packets does not
 change safety, since we already know Paxos
 is safe against drops and delayed messages.
-Essentially a leader holding a lease is delaying the
+Essentially holding a lease (lets call the 
+lease holder a "leader" now, even if there was
+no official election phase) is delaying the
 network messages from all other proposers until that leader's 
 lease expires without renewal, fitting all the leaders work into the time
 before that happens. The lease does time 
@@ -772,7 +781,7 @@ dilation, in effect.
 Let's try adding fifo-leasing during phase 2 instead of phase 1.
 The main thing about phase 2 is that can start
 being aware of the prepare-quorum from phase 1.
-We get the possibly chosen or maybe not value, or a new value 
+We get the possibly chosen or maybe-not-chosen value, or a new value 
 to write, along with the ballot to write it under.
 We'll get conflicted out if we have seen a quorum of higher
 ballots in the meantime. We cannot "go back in time"
@@ -782,16 +791,32 @@ because the higher ballot proposer has already
 heard our promise; otherwise it would not have
 sent us a second 2a. It might have sent us a 1a,
 which we can defer, but we cannot defer a 2a.
-So we need to distinguish between these two types
-of conflict.
+So the lease holder needs to distinguish between these two types
+of conflict, that from 1a and that from 2a.
+Does this get us out of trouble?
 
 Having an acceptor queue the second or later arriving
 proposal once a fifo-lease is in force instead of 
 recording it immediately as a promise is a delay, 
 and if that acceptor fails before it gets to it,
 then the delay becomes a dropped message. So
-fifo auto leases preserves correctness (safety).
-
+fifo auto leases preserves correctness (safety),
+but only assuming a quorum knows about the fifo-lease, and 
+has promised to repsect it. This motivates why
+any lease has to go through the consensus process
+itself to become established with a quorum. We
+cannot assume anything based on a non-quorum fifo
+lease, and so it has to be chosen first. Since
+this is equivalent to just doing the round
+anyway, it doesn't actually offer any optimization.
+It is not a shortcut. In order to lease, we
+also need consensus on the leases. Leader election
+with the leader holding a lease may be stronger
+than we need (EPaxos tries hard to avoid it,
+for WAN optimization), but it does ensure correctness
+and might be the simplest among possible solutions.
+EPaxos adds alot of complexity, and as above, we are
+still not sure that it is correct.
 
 3. "Revisiting The Paxos Algorithm" by Roberto De Prisco,
 Masters Thesis, MIT, 1997.

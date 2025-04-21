@@ -613,6 +613,56 @@ the next proposer in their queue, in FIFO order,
 providing some degree of fairness while
 stopping many pointless dueling livelocks.
 
+I suppose the difficulty arrises with not
+all acceptors agreeing on which of competiting "first"
+prepares that each arrive at first 
+different acceptors, having come from different
+proposers. In the Synod prepare phase, 
+acceptors reject lower than promised ballots, but promise
+for >= ballots. Two acceptors can fifo-lease
+to two different prepares in phase 1, so both defer 
+replying to the other's promise requests. If
+each node gets involved in a different lease,
+nobody makes progress until all leases have
+expired and we try again. We are still live locking,
+with the added chagrin that actually we are all
+asleep waiting for the proposer to get a prepare-
+quorum that will have to wait for lease expiration.
+
+By network equivalence or a filtration argument
+in Paxos, any change that is equivalent to
+dropping or delaying packets does not
+change safety, since we already know Paxos
+is safe against drops and delayed messages.
+Essentially a leader holding a lease is delaying the
+network messages from all other proposers until that leader's 
+lease expires without renewal, fitting all the leaders work into the time
+before that happens. The lease does time 
+dilation, in effect.
+
+Let's try adding fifo-leasing during phase 2 instead of phase 1.
+The main thing about phase 2 is that can start
+being aware of the prepare-quorum from phase 1.
+We get the possibly chosen or maybe not value, or a new value 
+to write, along with the ballot to write it under.
+We'll get conflicted out if we have seen a quorum of higher
+ballots in the meantime. We cannot "go back in time"
+and erase our prior promise about a higher ballot,
+pretending to drop or defer that message,
+because the higher ballot proposer has already 
+heard our promise; otherwise it would not have
+sent us a second 2a. It might have sent us a 1a,
+which we can defer, but we cannot defer a 2a.
+So we need to distinguish between these two types
+of conflict. An acceptor 
+
+Having an acceptor queue the second or later arriving
+proposal once a fifo-lease is in force instead of 
+recording it immediately as a promise is a delay, 
+and if that acceptor fails before it gets to it,
+then the delay becomes a dropped message. So
+fifo auto leases preserves correctness (safety).
+
 
 3. "Revisiting The Paxos Algorithm" by Roberto De Prisco,
 Masters Thesis, MIT, 1997.
@@ -670,7 +720,7 @@ on Paxos and explaining it's value. Lamport of course
 went on to win the Turing Award in 2013 for his
 body of work.
 
-on Raft
+On Raft
 -------
 
 After you understand Paxos, you'll probably view
@@ -702,6 +752,37 @@ make better choices when they are available.
 
 Alex's recommendation of CAS-Paxos as a good "weekend project"
 place to start is one I'm repeating here.
+
+That said, having now read the alot of the
+literature on Paxos based reconfiguration, and
+compared it to the Raft paper's approach,
+I would have to say this to try and persuade
+you to use Raft for your Czar or master for
+handling configuration of itself and for a
+larger cluster. The Raft approach
+is safe, sane, proven and has an easy
+recipe for implementation. The Paxos
+based approaches to reconfiguration are sketched
+without proofs, not well thought out, 
+and not fully analyzed. With full irony,
+there is no consensus among them on 
+how to reconfigure.
+
+For a re-reconfigurable cluster (that is,
+all clusters -- all real clusters need reconfiguration in
+reality as nodes die and need replacement),
+you either shut it all down and fix it all at
+once, taking a large service window (outage),
+and involves manual operator, or you find 
+an automatic online reconfiguration 
+protocol that actually has a theoretical and
+machine checked safety proofs.
+After doing the research, the clear vote is for Raft.
+To me, having solid reconfiguration just over rules
+any other (performance) concern. If I'm
+just looking to provide a replication Czar
+or master for other services, Raft is brilliant.
+Jump on the raft, and survive these turbulent waters.
 
 ------------
 

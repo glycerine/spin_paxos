@@ -681,7 +681,7 @@ https://embryology.med.unsw.edu.au/embryology/index.php/Zona_pellucida
 The egg almost instantaneously creates a 
 protection barrier -- not unlike how the earth's
 atmosphere protects it from cosmic rays. The first
-sperm to wiggle through the zona pelucia causes a massive wave
+sperm to wiggle through the zona pellucida causes a massive wave
 of calcium release to flash through the plasma of the oocyte,
 signalling (broadcasting to all receptors) on the entire 
 egg surface that the first sperm has arrived, and 

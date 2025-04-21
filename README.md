@@ -968,6 +968,17 @@ It does not push the problem off to another
 external (Paxos) service rather than 
 taking responsibility and solving it itself.
 
+In an amusing reversal on intent, Alex gives the above
+Venn diagram to suggest that Raft is a good
+idea only at an intersection of concerns.
+For my use of creating a membership service/configuration 
+server for other protocols, this is the exact
+use case, and thus strongly argues for Raft. 
+In order to minimize dependencies, I don't want 
+an external configuration service. Everything
+is going to contend on the state of the configuration,
+so livelocking on that would be bad.
+
 Note that a limitation is that the Raft protocol
 only allows the addition of a single node
 at a time to its own state machine (as opposed

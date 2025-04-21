@@ -157,7 +157,7 @@ quorum, then that is the singe consensus value.
 
 This read-turned-into-a-write is
 actually a critical component of the protocol,
-that preserves the invarient that only a single
+that preserves the invariant that only a single
 value ever reaches consensus, even with all nodes
 acting locally on only their local information. The
 safety/correctness "emerges" from their joint

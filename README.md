@@ -1057,6 +1057,14 @@ The optimized version shown in the published paper
 stalls and completes no rounds without this correction,
 as the acceptor does not reply with any phase 1 promise message.
 
+I would also note that in the original, they stop checking
+for correctness once a value is chosen, which is 
+quite a bit weaker than checking for the chosen value not
+being overwritten with a different value in a subsequent
+round, the essential correctness (safety) condition.
+So consider this a useful learning example, rather 
+than any kind of complete proof.
+
 In summary, the included Promela files are my creation,
 with lots of renames and upgrades, but these rest on the bones
 provided by Delzanno et al.

@@ -674,8 +674,8 @@ prevents multiple spermatozoa from fertilizing it.
 Like the Wakanda force-field shield dome snapping on,
 the very first fusion of sperm and egg says, "shields up!"
 
-![the zona pelucida, like a force field shield](zona_pelucida.png)
-Zona pelucida image from
+![the zona pellucida, like a force field shield](zona_pellucida.png)
+Zona pellucida image from
 https://embryology.med.unsw.edu.au/embryology/index.php/Zona_pellucida
 
 The egg almost instantaneously creates a 
@@ -685,7 +685,7 @@ sperm to wiggle through the zona pelucia causes a massive wave
 of calcium release to flash through the plasma of the oocyte,
 signalling (broadcasting to all receptors) on the entire 
 egg surface that the first sperm has arrived, and 
-inducing depolarization at the zona pelucida 
+inducing depolarization at the zona pellucida 
 that locks out other sperm. This is called the fast block
 to polyspermy.
 https://en.wikipedia.org/wiki/Zona_pellucida

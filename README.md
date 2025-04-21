@@ -985,7 +985,7 @@ for, whose changes could be arbitrary).
 
 
 ![rafting.png](rafting.png)
-White water rafting with an even number is
+image caption: White water rafting with an even number is
 especially dangerous, since split votes are common. We
 need to add a fifth node in the middle of the river.
 

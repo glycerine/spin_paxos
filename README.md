@@ -962,6 +962,27 @@ It does not push the problem off to another
 external (Paxos) service rather than 
 taking responsibility and solving it itself.
 
+Note that a limitation is that the Raft protocol
+only allows the addition of a single node
+at a time to its own state machine (as opposed
+to the cluster that Raft is managing the state
+for, whose changes could be arbitrary).
+
+> Raft is also more suitable than previous 
+> algorithms for real-world implementations. 
+> It performs well enough for practical deployments, 
+> and it addresses all aspects of building a 
+> complete system, including how to manage client 
+> interactions, how to change the cluster 
+> membership, and how to compact the log 
+> when it grows too large.
+> To change the cluster membership, Raft 
+> allows adding or removing one server at a time 
+> (complex changes can be composed from 
+> these basic steps), and the cluster continues 
+> servicing requests throughout the change. 
+>   -- Ongaro 2014, Raft dissertaion Abstract, page iv.
+
 We've got to maintain and update membership, 
 so delegrating the real work elsewhere just adds
 dependencies and to my thinking, is a cheap ducking

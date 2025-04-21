@@ -116,6 +116,135 @@ Iulian Moraru, David G. Andersen, Michael Kaminsky, 2013.
 https://www.cs.cmu.edu/~dga/papers/epaxos-sosp2013.pdf
 https://github.com/efficient/epaxos
 
+On understanding Paxos: an open secret
+--------------------------------
+
+Let me provide a hint up front. This is kind of an
+open secret about single-decree Paxos. It
+represents a paradigm shift in thinking, going
+from single-computer systems to distributed systems,
+and can be unintuitive.
+
+To me, this is a key understanding that will save you
+from many false pre-conceptions if you go in holding
+this knowledge in mind. This is it: state is diffused.
+State, aka "the most recent version things", is not local anymore.
+This sounds obvious, but it is actually subtle. State
+has been diffused. You can never blindly trust "just"
+the local version ever again. Note you should 
+ignore leases and leaders for now.
+
+Because single-decree Paxos is fault tolerant by keeping its most
+up-to-date state distributed over a majority (think 2 of 3) nodes,
+the "latest" state (which is "just" the state) really is 
+_diffused over a quorum_. The latest state cannot be 
+determined, ever, by reading 
+only a single node. Even for read-only, you _must_ 
+read from a quorum to know you have the "latest" state,
+because the state is diffused over the quorum. It
+does not exist at all on any single node. "Latest"
+is always a cluster property of a quorum of that
+cluster's nodes, not of any single node alone. 
+Realizing this will save you alot of heartache and headache.
+
+In single decree Paxos, the new read that wants
+to find the value of the write-once register actually
+has to do a write too, not just a read. Why? Because
+the state is diffused over the quorum, and due
+to partition (message drop) and recovery, the
+only guarantee is that after learners hear from a
+quorum, then that is the singe consensus value. 
+
+This read-turned-into-a-write is
+actually a critical component of the protocol,
+that preserves the invarient that only a single
+value ever reaches consensus, even with all nodes
+acting locally on only their local information. The
+safety/correctness "emerges" from their joint
+actions, even though it is not obvious immediately, locally,
+when that has happened. From the "god's eye" view
+of looking at all three machines in an example cluster,
+when we see a quorum of two acceptors persist the
+same accepted state to disk successfully, we 
+know that consensus value has been chosen. The
+acceptors themselves do not know this. The
+learners collect a quorum of acknowledgements
+and then they know it. Could they then proceed
+to mark that version of the value locally as the
+chosen one, saving any future reads/writers from
+going through the whole protocol? Sure, but single
+decree Paxos does not do this. It would be one
+of a plethora of optimizations possible. So keep
+that in mind: there are "obvious" optimizations
+that would translate the diffuse state into
+local state in single-decree Paxos, and you might
+blithely assume that, of course, this is already
+done, but beware: it is not. In single decree
+Paxos, state is diffused over a quorum. 
+
+Here is an example that shows how a read from a 
+single replica node is insufficient. Suppose one node
+in a three node cluster is returning from being partitioned off
+by itself; it might be severely, or only a little
+bit, out of date. Either way, it will serve you
+a stale read. In order to get a consensus
+read, you have to read from it AND another of the
+two nodes. A quorum read is required to not be
+served a stale read.
+
+So supposing we apply the "obvious" optimization
+described above, and also mark our register as
+chosen, once it is chosen. 
+
+Then we start to think about multiple registers, getting into multi-paxos,
+so now we have an array of registers, each called
+a slot, some of which are marked chosen, some of which might still be
+in the process of being chosen. 
+
+Again the question arises, how can we be
+sure which slot of chosen values is the latest? Again the diffused
+state principle helps us out. If we only read
+a single replica's idea of the latest committed
+slot, we might be stale. That node might be partitioned
+from the quorum and thus in a minority. Other nodes
+in the quorum may have gone far past the local
+slot array of chosen values. If we pick what we "think" is
+the latest from a single node (remember we 
+are ignoring leases and leaders for now; in fact this is
+the motivation for why multi-paxos wants a leader
+with a lease...), we are always vulnerable to reading
+from a minority node that does not know yet that they
+have been cut off in a partition (equivalent to lost messages).
+
+State is diffused over a quorum. Say
+it with me, "state is diffused over a quorum".
+
+Leaders and leases offer a way to trade off some
+availability upon node failure (less frequent)
+for some happy-path (more frequent) read optimizations. 
+How can the leader know that the diffused state
+has been correctly cached locally? If it has an
+unexpired lease from a quorum of nodes, that
+is their guarantee to not participate in any
+quroums other than those proposed by the leader,
+during the lease time. They must be actively
+ignoring/rejecting other leaders during the lease time.
+A minority (patitioned scenario) must not be able to
+think they have an overlapping lease, because
+they would serve stale reads. This is why the
+lease itself must be confirmed through
+the consensus process itself. If you do not have consensus
+on a lease, you do not have a lease at all!
+
+When studying single-decree Paxos (Synod), it is best just to
+ignore leaders and leases, and tuck such 
+optimizaitons away in the back of your mind.
+First learn single decree Paxos. Then you will
+readily understand the motivation for leaders and leases. 
+For now, leaders and leases, and in fact
+many other possible optimizations, are not 
+in the picture.
+
 Some good introductions to Paxos
 --------------------------------
 
@@ -654,7 +783,7 @@ heard our promise; otherwise it would not have
 sent us a second 2a. It might have sent us a 1a,
 which we can defer, but we cannot defer a 2a.
 So we need to distinguish between these two types
-of conflict. An acceptor 
+of conflict.
 
 Having an acceptor queue the second or later arriving
 proposal once a fifo-lease is in force instead of 

@@ -749,7 +749,7 @@ the next proposer in their queue, in FIFO order,
 providing some degree of fairness while
 stopping many pointless dueling livelocks.
 
-The difficulty arrises with not
+The difficulty arises with not
 all acceptors agreeing on which of competiting "first"
 prepares that each arrive at first 
 different acceptors, having come from different
@@ -986,21 +986,14 @@ only allows the addition of a single node
 at a time to its own state machine (as opposed
 to the cluster that Raft is managing the state
 for, whose changes could be arbitrary).
-
-> Raft is also more suitable than previous 
-> algorithms for real-world implementations. 
-> It performs well enough for practical deployments, 
-> and it addresses all aspects of building a 
-> complete system, including how to manage client 
-> interactions, how to change the cluster 
-> membership, and how to compact the log 
-> when it grows too large.
-> To change the cluster membership, Raft 
-> allows adding or removing one server at a time 
-> (complex changes can be composed from 
-> these basic steps), and the cluster continues 
-> servicing requests throughout the change. 
->   -- Ongaro 2014, Raft dissertaion Abstract, page iv.
+Update: This turns out not to be true.
+In section 4.3 "Arbitrary configuration 
+changes using joint consensus" 
+of the Raft dissertation, he shows how 
+to support larger set changes at once.
+See Ongaro 2014, Raft dissertaion Abstract, page iv,
+but then Section 4.3, pages 43 - 45 contradict
+the opening abstract claim of single node updates.
 https://github.com/ongardie/dissertation https://raft.github.io/
 
 ![rafting.png](rafting.png)

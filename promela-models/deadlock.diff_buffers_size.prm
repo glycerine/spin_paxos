@@ -1,0 +1,43 @@
+#define BUFFERSZ_LEVEL1 N
+#define BUFFERSZ_LEVEL0 M
+/* if BUFFERSZ_LEVEL1<BUFFERSZ_LEVEL0 then deadlock appears*/
+
+#define LEFT_SIDE 0
+#define RIGHT_SIDE 1
+
+chan down_to_up[2]=[BUFFERSZ_LEVEL0] of {byte};
+chan up_to_down[2]=[BUFFERSZ_LEVEL0] of {byte};
+chan left_right[2]=[BUFFERSZ_LEVEL1] of {byte};
+
+mtype={data};
+
+
+proctype level0(chan to_down, from_down )
+{
+danger:	do
+	::from_down?data
+	::to_down!data
+	od
+}
+
+proctype level1(chan from_up, to_up, from_side, to_side)
+{
+	do
+	::from_up?data ->
+danger:		to_side!data
+	::from_side?data ->
+		to_up!data
+	od
+}
+
+init
+{
+	atomic{
+		run level0(up_to_down[LEFT_SIDE],down_to_up[LEFT_SIDE]);
+		run level1(up_to_down[LEFT_SIDE],down_to_up[LEFT_SIDE],left_right[LEFT_SIDE],left_right[LEFT_SIDE]);
+
+		run level0(up_to_down[RIGHT_SIDE],down_to_up[RIGHT_SIDE]);
+		run level1(up_to_down[RIGHT_SIDE],down_to_up[RIGHT_SIDE],left_right[RIGHT_SIDE],left_right[RIGHT_SIDE])
+	}
+}
+

@@ -1,0 +1,233 @@
+#if 0
+>From gerard@research.att.comTue Dec  5 08:26:25 1995
+Date: Sun, 3 Dec 95 13:24 EST
+From: gerard@research.att.com
+Subject: model?
+#endif
+
+#if 0
+hi audun
+i've made a first attempt to build an approximate model
+that can capture the setup from your paper
+for simplicity of the model, i've used separate channels
+for different sessions - roughly as follows:
+
+	A ---[ ch[0] <------S1------> ch[1] ]---> B
+
+        A ---[ ch[3] <------S2------> ch[2] ]---> C
+
+	B ---[ ch[4] <------S3------> ch[5] ]---> C
+
+that is: in Session S1, A sends messages to B via ch[1],
+	and receives responses via ch[0], etc.
+in the setup below, C snooops on S1, but ignores the
+messages from S2 (that's probably insufficient, but a start).
+
+i've made the model such that processes will hang irrevocably
+once an error is detected - and can only complete if all
+goes as expected (no security violations are detected by them).
+in that case, and only in that case, can the variable Done
+reach the value 6 (i.e., all 6 processes complete).
+
+verification proceeds as follows:
+
+	spin -a thisfile
+	gcc -o pan -DREDUCE -DNOFAIR pan.c
+	pan
+
+if you do this, you'll see that no assertion violation is
+possible in this version, so i must have excluded the valid
+attack (probably the choice of nonces in C is bad)
+can you see what should be changed?
+-gerard
+
+
+Hello Gerard
+
+The model works now and produces the expected assert violation. 
+I had to modify a few things(see update history below), and I do find 
+the implementation a little awkward. I'll explain why:
+
+1. The entities are identified by their reception channels. As each 
+session uses a different channel, the entities get rather schizophrenic, 
+and this causes particular problems when messages are snooped from one 
+session and replayed in another.
+
+2. Snooping a message only works when it occurs before the proper 
+reception of the message. Allthough the verification still works, it 
+increases the search tree and makes debugging more difficult.
+
+I would prefere to separate entity identity from channel nbr, or let 
+each entity use only one channel. As to the problem when snooping fails,
+my solution with semaphores (se update history below) only works when 
+the concerned proctype is invoked only once. In the model, the problem 
+persists is L because it is invoked twice. I could have used some 
+internal checks to identify the particular instance where the semaphore 
+applies, but it gets dirty. An ultimate solution is to duplicate the 
+proctypes and implement the semaphores only where it is needed, but 
+this increases the code size. 
+
+I hope you can give me some suggestions of what you feel is the best
+solution. I can manage the coding. I hope to establish a general model 
+structure which is applicable also for more extended models and for
+other security protocols. I would like to have a well tuned model 
+structure before attacking other protocols.
+
+Audun
+
+#endif
+
+
+/********************************************************************/
+/* X.509 Authentication Protocol                                    */
+/* SPIN Verification Model                                          */
+/* Version 1                                                        */
+/* Last updated 07.12.95  13:00 GMT                                 */
+/********************************************************************/
+
+#if 0
+MODEL DESCRIPTION
+*****************
+
+	A ---[ ch[0] <------S1------> ch[1] ]---> B
+
+   A ---[ ch[3] <------S2------> ch[2] ]---> C
+
+	B ---[ ch[4] <------S3------> ch[5] ]---> C
+
+That is: in Session S1, A sends messages to B via ch[1],
+	      and receives responses via ch[0], etc.
+
+UPDATE HISTORY FROM VERSION 0 
+*****************************
+ 1. The field 'mqr' for 'masquerader' is added to the message 
+structure in order to simulate interception so that the real recipient 
+of a message can be different from the intended destination. 
+
+2. The field 'session' is removed from the message structure because 
+the explicit channel allocation makes it redundant.
+ 
+3. A new proctype LC is defined in order to reflect entity C's freedom 
+of choice of nonce for msg M2 in session S2.
+
+4. The size of each channel is redused to 1.
+
+5. TC adjusts the signature of snooped messages before sending them.
+
+6. The semaphores 'snoop1' and 'snoop2' are used in TC and LC to make sure 
+that a message can not be removed from a channel before it has been 
+snooped. This reduces the search tree.
+
+#endif
+
+
+mtype = { M1, M2, M3 };
+
+chan ch[6] = [1] of {
+	mtype,	/* type:    M1, M2, M3 */
+   byte,    /* mqr:     masquerader */
+	byte,		/* os:      originator/signer */
+	byte,		/* n1:      nonce*/
+	byte,		/* d:       destination  */
+	byte		/* n2:      nonce */
+};
+
+#define Nonce(a,b)	(5*a + b - 1)	/* 5x[0..5]+[0..5]-1 -> [0..29] */
+#define Filler		0
+
+byte Done;	/* counts nr of procs successfully completing */
+bool snoop1=0, snoop2=0;
+
+proctype T(byte own; byte dst)
+{		byte o, nonce, n1, n2, d, dummy;
+
+		nonce = Nonce(own,dst);
+
+   Step1:	ch[dst]!M1, own, own, nonce, dst, Filler;
+
+endStep2:	ch[own]?M2, dummy, o, n1, d, n2;
+		/* Hangs if false: */
+end2:		(o==dst && d==own && n2==nonce);
+   Step3:	ch[dst]!M3, own, own, n1, Filler, Filler;
+
+		Done++	/* success */
+}
+
+proctype L(byte own)
+{		byte d, dst, mqr, n1, n, nonce, dummy;
+
+endStep1:	ch[own]?M1, mqr, dst, n1, d, Filler;
+/* This entity is vulnerable to masquerade */
+
+end1:		(d == own);				/* Hangs if false */
+
+		nonce = Nonce(own,dst);
+   Step2:	ch[mqr]!M2, own, own, nonce, dst, n1;
+/* If we are attacked, the masquerader will receive the message */
+
+endStep3:	ch[own]?M3, dummy, d, n, Filler, Filler;
+end3:	(d==dst) -> (n==nonce);	/*  Hangs if false */
+
+		Done++	/* success */
+}
+
+proctype LC(byte own)
+{		byte d, dst, n1, n, nonce, dummy;
+
+		/* monitor  T<->L session S3: C -> B via ch[5] */
+		/* send to A via ch[3] rcv via ch[2] -- session S2 */
+
+endStep1:	ch[own]?M1, dummy, dst, n1, d, Filler;
+
+end1:		(d == own);				/* Hangs if false */
+
+endSnoop1:	ch[5]?<M2, dummy, dummy, nonce, dummy, dummy>;
+/* We just want to pick up the nonce */
+            snoop1 = 1;
+
+   Step2:	ch[dst]!M2, own, own, nonce, dst, n1;
+end2:      (snoop2==0);
+endStep3:	ch[own]?M3, dummy, d, n, Filler, Filler;
+end3:		(d==dst && n==nonce);	/* Hangs if false */
+
+		Done++	/* success */
+}
+
+proctype TC(byte own; byte dst; byte src)
+/* 'own' masquerades as 'src'  */
+{		byte t, o, nonce, n1, n2, d, dummy;
+
+		/* monitor  T<->L session S2: A -> C via ch[2] */
+		/* snoop on T<->L session S1: A -> B via ch[1] */
+		/* send to B via ch[4] rcv via ch[5] -- session S3 */
+
+endSnoop2:	ch[1]?<M1, dummy, o, nonce, d, Filler>;
+Step1:	ch[dst]!M1, own, o, nonce, dst, Filler;
+/* The destination field is changed from 'd' to 'dst' to match channels */
+
+end1:       (snoop1==1);
+endStep2:	ch[own]?M2, dummy, o, n1, d, n2;
+		/* Hangs if false: */
+end2:		(o==dst && d==src && n2==nonce);
+
+endSnoop3:	ch[2]?<M3, dummy, o, nonce, Filler, Filler>;
+            snoop2=1;
+   Step3:	ch[dst]!M3, own, src, nonce, Filler, Filler;
+/* The signature is changed from 'o' to 'src' to match the channel */ 
+
+		Done++	/* success */
+}
+
+init {
+	atomic {
+		run T(0, 1);        /* A -> B: S1 */
+		run T(3, 2);        /* A -> C: S2 */
+
+		run L(1);		     /* B <- A: S1 */
+		run L(4);		     /* B <- C: S3 */
+
+		run LC(2);          /* C <- A: S2 */
+		run TC(5, 4, 0)     /* C -> B: S3 */
+	};
+	assert(Done < 6)
+}

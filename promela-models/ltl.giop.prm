@@ -1,0 +1,740 @@
+/*****************************************************************************
+ * GIOP Promela Model
+ *
+ *
+ * vim:tabstop=4 noexpandtab:
+ * $Id: ltl.giop.prm,v 1.1 2003/05/23 10:45:32 leven Exp $
+ *
+ * TODO:
+ *
+ * Copyright (C) 1998 by Moataz Kamel. All rights reserved.
+ *****************************************************************************/
+
+/* Scalables parameters */
+#define NUSERS 			1      /* {1..n} (4) */
+#define NSERVERS		1       /* {1,2} (2)*/
+#define CHANLEN			5	/* default channel length (5) */
+
+#define MAXREQID 		4	/* maximum number for request_id (4) */
+#define NUMOBJS			2	/* number of objects (2) */
+#define NUMPORTS 		3 	/* number of ports = no. of transport procs (3)*/
+/* At the moment, disabled */
+#define MAXMIGRATIONS	0	/* maximum number of times server can migrate (2) */
+
+
+#define FALSE	0
+#define TRUE	1
+
+#define FREE		0	/* indicates a resource is unused */
+#define INUSE		1	/* indicates a resource is being used */
+#define CANCELLED	2	/* indicates a request has been cancelled */
+
+#define INVALID	255		/* set invalid data as garbage (i.e 255) */
+
+
+typedef ObjRef {
+	byte objKey;
+	byte port;
+}
+
+/* Define the table of published IORs for all ORBS
+ * This is essentially the Name Server, it should be
+ * managed by a dedicated process but for now, it is 
+ * shared.
+ * The table is indexed by objKey and contains the port 
+ * of the ORB where the object was most recently registered.
+ */
+byte gPublished[NUMOBJS] = INVALID; /* Note: this inits all array values */
+
+/* Message types */
+mtype = { 
+
+	/* GIOP message types */
+	Request, 
+	Reply, 
+	CancelRequest, 
+	CloseConnection, 
+
+	/* User message types */
+	URequest,
+	UReply,
+
+	/* Server message types */
+	SRegister,
+	SRequest,
+	SReply,
+	SMigrateReq,
+};
+
+
+/* The MsgHeader structure aggregates all the fields from all types of 
+   GIOP message headers 
+*/
+typedef MsgHeader {
+	byte request_id;	/* Request, Reply, CancelRequest, */
+	byte object_key;		/* Request, LocateRequest, */
+	byte reply_status;		/* Reply */
+	byte forward_port;		/* Reply -- LOCATION_FORWARD address */
+}
+
+typedef GIOPMsg {
+	MsgHeader mhdr;
+}
+
+/* reply_status return codes */
+#define NO_EXCEPTION		1
+#define USER_EXCEPTION		2
+#define SYSTEM_EXCEPTION 	3
+#define LOCATION_FORWARD	4
+#define OBJECT_NOT_EXIST	5
+
+/* locate_status return codes */
+#define UNKNOWN_OBJECT 		1
+#define OBJECT_HERE 		2
+#define OBJECT_FORWARD 		3
+
+#define AGENT_CLOSED 		0
+#define AGENT_CONNECTED 	1
+
+
+/*--------------------------------------------------------------------------*/
+chan toUser = [CHANLEN] of {mtype, byte /*tag*/, byte /*status*/};
+
+proctype User(chan lin, lout)
+{
+	byte tag = _pid;	/* use our pid as a tag value */
+	byte status;
+	ObjRef objref;
+
+	/* Get a valid object reference from the published table and 
+	 * use it to make a request. Note: non-deterministic selection 
+	 * is used to choose the object. Also, the numbers are hardcoded, so
+	 * if NUMOBJS changes this code will have to change.
+	 */
+	gPublished[0] != INVALID;
+	/*gPublished[1] != INVALID;	/* wait until both are initialized */
+
+	atomic{
+	if
+	:: (1) ->
+		objref.objKey = 0;
+		objref.port = gPublished[0];
+	/*:: (1) ->
+		objref.objKey = 1;
+		objref.port = gPublished[1];*/
+	fi;
+	}
+
+	/* send a user request on the object */
+	lout!URequest(tag,objref);
+
+URequestSent:
+
+
+	/* Wait for a reply and only receive it if it has the same tag 
+	 * (i.e. originated from this instance of the user) */
+dangerf:
+       	lin?UReply(eval(tag), status);
+
+progress:
+	if
+	/*::status++; goto progress
+	::status>20; goto progress*/
+	::goto progress
+	fi;
+
+UReplyReceived:
+	skip;
+
+}
+
+
+/*--------------------------------------------------------------------------*/
+
+chan toClientL = [0] of {mtype, byte /*svrPort*/, GIOPMsg};
+chan toClientU = [CHANLEN] of {mtype, byte /*tag*/, ObjRef};
+
+proctype GIOPClient(chan uin, uout, lin, lout)
+{
+	byte usedReqId[MAXREQID] = FREE;	/* keeps track of request_ids in-use */
+	byte tags[MAXREQID] = INVALID;		/* associates tags to request_ids */
+	ObjRef objRefs[MAXREQID] = INVALID;	/* saves objRefs in case of CloseConnection */
+
+	byte reqId;
+	byte tag;	
+	ObjRef objref;
+	GIOPMsg msg;
+	byte svrPort;
+        
+end: do
+	:: uin?URequest(tag,objref) -> 
+		/* Received a URequest message from the user
+		 * tag      identifies the User process that made the request 
+		 * objref   is the object reference containing the destination port
+		 */ 
+
+		d_step {
+			svrPort = objref.port;
+
+		/* find a free request_id by scanning the usedReqId array */
+			reqId = 0;
+			do
+			:: (usedReqId[reqId] != FREE) -> 
+				reqId = (reqId + 1);
+				assert(reqId < MAXREQID) /* all reqIds INUSE */
+
+			:: (usedReqId[reqId] == FREE) -> 	
+				break;
+			od;
+
+		/* found a free request_id, mark it as INUSE */
+			usedReqId[reqId] = INUSE;
+
+			/* save the tag for when we get the Reply */
+			/* save the objref in case we get a CloseConnection */
+			tags[reqId] = tag;
+			objRefs[reqId].objKey = objref.objKey;
+			objRefs[reqId].port = objref.port;
+
+			/* build and send the request message */
+			msg.mhdr.request_id = reqId;
+			msg.mhdr.object_key = objref.objKey;
+		}
+		/* send the request */
+        		lout!Request(svrPort, msg);
+
+
+		/* randomly choose to cancel the sent request or just continue */
+		if
+		:: (1) ->
+			/* do nothing */
+		:: (1) ->
+
+			/* The Message contents are the same as the request, The important 
+			 * thing is the request_id needs to be the same as the request */
+dangere:			lout!CancelRequest(svrPort, msg);
+
+			usedReqId[reqId] = CANCELLED;
+			
+			/* send a reply to the user indicating an exception */
+			uout!UReply(tag, SYSTEM_EXCEPTION);
+		fi;
+
+	:: lin?Reply(svrPort, msg) -> 
+
+		/* It is an error to receive a reply for something that is not
+		 * either pending or cancelled.  */
+		d_step {
+		reqId = msg.mhdr.request_id;
+		assert( usedReqId[reqId] != FREE );
+		}
+
+		if
+		:: (usedReqId[reqId] == INUSE) -> 
+			/* normal case, request exists */
+
+			if
+			:: ( msg.mhdr.reply_status == LOCATION_FORWARD ) ->
+
+				/* re-send the request to the new forward address */
+				/* save the new port in case of Close */
+
+				d_step{
+				objRefs[reqId].port = msg.mhdr.forward_port;
+				}
+
+				lout!Request(objRefs[reqId].port,msg);	
+
+			:: else ->
+
+				/* send the reply to the user */
+				uout!UReply(tags[reqId], msg.mhdr.reply_status); 
+
+				/* free the request_id */
+				d_step{
+				usedReqId[reqId] = FREE;
+				tags[reqId] = INVALID;
+				objRefs[reqId].port = INVALID;
+				objRefs[reqId].objKey = INVALID;
+				}
+
+			fi;
+
+		:: (usedReqId[reqId] == CANCELLED) -> 
+			/* request was previously cancelled, so just free the request_id */
+			d_step{
+			usedReqId[reqId] = FREE;
+			tags[reqId] = INVALID;
+			objRefs[reqId].port = INVALID;
+			objRefs[reqId].objKey = INVALID;
+			}
+		fi;
+
+	:: lin?CloseConnection(svrPort, msg) -> 
+		/* If a client receives a CloseConnection message from the server, it
+		 * should assume that any outstanding messages (i.e. without replies)
+		 * were received after the server sent the CloseConnection message,
+		 * were not processed, and may be safely resent on a new connection.
+		 * (12-31)
+		 */
+
+		 /* find all outstanding requests for the given server */
+		reqId = 0;
+		do
+		:: (reqId == MAXREQID) -> 
+			break
+
+		:: (reqId != MAXREQID) ->
+
+			if
+			:: (objRefs[reqId].port == svrPort) ->
+				/* only consider outstanding requests to the given server */
+				if
+				:: (usedReqId[reqId] == INUSE) ->
+					/* This request has not received a reply.
+					 * Re-send the request on a new connection.
+					 * (the transport will have made a new connection)
+					 */
+
+					/* build and send the request */
+					d_step {
+					msg.mhdr.request_id = reqId;
+					msg.mhdr.object_key = objRefs[reqId].objKey;
+					}
+					lout!Request(objRefs[reqId].port,msg);
+
+				:: (usedReqId[reqId] == CANCELLED) ->
+					/* This request has not received a reply but
+					 * the user is not expecting one. Just free it.
+					 */
+					d_step{
+					usedReqId[reqId] = FREE;
+					tags[reqId] = INVALID;
+					objRefs[reqId].port = INVALID;
+					objRefs[reqId].objKey = INVALID;
+					}
+
+				:: (usedReqId[reqId] == FREE) ->
+					/* do nothing */
+
+				fi;
+
+			:: (objRefs[reqId].port != svrPort) ->
+				/* do nothing */
+			fi;
+			reqId = reqId + 1
+
+		od;
+
+	od
+}
+
+
+/*--------------------------------------------------------------------------*/
+
+/* Define the channel; all servers share the same channel */
+chan toServer[NUMPORTS] = [CHANLEN] of 
+	{mtype, byte /*objkey*/, byte /*opaqueData*/, byte /*opaqueData2*/};
+
+chan toAgentU[NUMPORTS] = [0] of {mtype, byte /*objKey*/, byte
+/*opaqueData*/, byte /*opaqueData2*/};
+chan toAgentL[NUMPORTS] = [0] of {mtype, byte /*clPort*/, GIOPMsg};
+
+proctype Server(byte port, objKey)
+{
+	byte opaqueData;
+	byte opaqueData2;
+	byte newport;
+	byte numMigrations = 0;
+	
+	/* Each server process represents a single server object;
+	 * the object_key is a unique ID for each server object
+	 */
+
+	toAgentU[port]!SRegister(objKey,0,0);
+
+dangera:       
+end: do
+
+	:: toServer[port]?SRequest(eval(objKey),opaqueData,opaqueData2) ->
+
+		/* send the reply */
+		toAgentU[port]!SReply(objKey,opaqueData,opaqueData2)	
+
+/*	:: (numMigrations < MAXMIGRATIONS) ->*/
+		/* Initiate server migration.
+		 * The migration destination is hardcoded, thus if more agents are
+		 * added this code would have to be changed...
+		 * Perhaps there is a better way?
+		 */
+/*		d_step{
+		numMigrations = numMigrations + 1;
+		if
+		:: (port == 1) ->
+			newport = 1
+		:: (port == 2) ->
+			newport = 1
+		:: else ->
+			assert(0)
+		fi;
+		}*/
+
+		/* First Register with the new Agent.
+		 */
+/*		toAgentU[newport]!SRegister(objKey,0,0);*/
+
+		/* Tell the old agent that we're moving and tell it our 
+		 * new port so it can forward requests to us 
+		 */
+/*		toAgentU[port]!SMigrateReq(objKey,newport,0);*/
+
+		/* Agent has completed the MigrateRequest, so we can complete the
+		 * migration i.e change our port...
+		 * But first, we need to clear out any SRequests that arrived after
+		 * initiation but before completion of the migration.
+		 */
+
+/*		do
+  		:: (1) ->
+  			if
+  			:: toServer[port]??[SRequest,eval(objKey),opaqueData,opaqueData2] ->
+  				toServer[port]??SRequest(eval(objKey),opaqueData,opaqueData2);
+  				toAgentU[port]!SReply(objKey,opaqueData,opaqueData2)	
+  			:: else ->
+  				break;
+  			fi
+  		od;
+  
+  		port = newport;*/
+   		/* migration complete */
+
+
+	od
+}
+
+/*--------------------------------------------------------------------------*/
+
+typedef AgentConnInfo {
+	byte requested[MAXREQID];	/* associates objectKeys with reqIds */
+	bit connState;
+	byte numOutstandingReqs;
+}
+
+proctype GIOPAgent(byte port; chan uin, uout, lin, lout)
+{
+	AgentConnInfo cinfo[NUMPORTS];
+	byte registered[NUMOBJS] = INVALID;	/* registered object keys */
+	byte reqId;
+	byte objKey;
+	GIOPMsg msg;
+	byte clPort;
+
+
+dangerc:       
+end: do
+	:: uin?SRegister(objKey,_,_) ->
+		/* Publish our address (port) as the ORB to contact for this objKey */
+		d_step{
+		gPublished[objKey] = port;
+
+		/* Save the server's objkey to be able to direct requests to it.
+		 * The registered array holds the current port at which the object
+		 * is registered since objects can migrate between agents.
+		 */
+		registered[objKey] = port;
+		}
+
+	:: uin?SMigrateReq(objKey,clPort,_) ->
+		/* The Server is informing us that it is migrating to another agent.
+		 * Save the new port so that if we get a request for the object we can
+		 * send a LOCATION_FORWARD reply with the new port.
+		 */
+		registered[objKey] = clPort;
+
+
+
+	:: lin?Request(clPort, msg) -> 
+		/* Got a request from a client: process it by sending an SRequest to
+		   the appropriate server or sending a LOCATION_FORWARD reply with the
+		   address of the appropriate server.
+		*/
+		d_step{
+		reqId = msg.mhdr.request_id;
+		objKey = msg.mhdr.object_key;
+		}
+
+		if
+		:: ( registered[objKey] == port ) ->
+			/* The server for the object is registered with this agent, so 
+			 * send the request to the server.
+			 */
+
+			cinfo[clPort].connState = AGENT_CONNECTED;
+
+			uout!SRequest(objKey,reqId,clPort);	/* send server request */
+
+SRequestSent:
+			d_step{
+			cinfo[clPort].requested[reqId] = INUSE;
+			cinfo[clPort].numOutstandingReqs = 
+				cinfo[clPort].numOutstandingReqs + 1;
+			}
+
+		:: ( registered[objKey] != port ) ->
+
+			d_step{
+			if
+			:: ( registered[objKey] == INVALID ) ->
+				/* No such server is registered, send back an exception */
+				msg.mhdr.request_id = reqId;
+				msg.mhdr.object_key = objKey;
+				msg.mhdr.reply_status = OBJECT_NOT_EXIST;
+			:: else ->
+				/* The server has migrated, so send back a LOCATION_FORWARD 
+				 * reply code with the new address of the server.
+				 */
+				msg.mhdr.request_id = reqId;
+				msg.mhdr.object_key = objKey;
+				msg.mhdr.reply_status = LOCATION_FORWARD;
+				msg.mhdr.forward_port = registered[objKey];
+			fi;
+			}
+
+			/* send the Reply */
+			lout!Reply(clPort,msg);	
+		fi;
+
+	:: uin?SReply(objKey,reqId,clPort) ->
+		/* Received server reply */
+		/* Note: Servers may reply to pending requests in any order. (12-31) */
+
+		/* It is an error to receive a SReply for a SRequest
+		 * that was not outstanding, this should never happen */
+		assert(cinfo[clPort].requested[reqId] != FREE);
+
+SReplyReceived:
+
+		if
+		:: (cinfo[clPort].requested[reqId] == CANCELLED) -> 
+			/* the request was cancelled so just free the reqId and
+			 * don't bother sending the Reply to the Client */
+			d_step{
+			cinfo[clPort].requested[reqId] = FREE;
+			cinfo[clPort].numOutstandingReqs = 
+				cinfo[clPort].numOutstandingReqs - 1;
+			}
+
+		:: (cinfo[clPort].requested[reqId] == INUSE) ->	
+			d_step{
+			msg.mhdr.request_id = reqId;
+			msg.mhdr.object_key = objKey;
+			msg.mhdr.reply_status = NO_EXCEPTION;
+			}
+			/* send the Reply */
+			lout!Reply(clPort,msg);	
+
+			d_step{
+			cinfo[clPort].requested[reqId] = FREE;
+			cinfo[clPort].numOutstandingReqs = 
+				cinfo[clPort].numOutstandingReqs - 1;
+			}
+
+		fi;
+
+		/* If this is the last outstanding request then 
+		 * close the connection.
+		 */
+		if
+		:: (cinfo[clPort].numOutstandingReqs == 0) ->
+			if
+			:: (cinfo[clPort].connState == AGENT_CONNECTED) ->
+
+				/* send the close */
+				lout!CloseConnection(clPort,msg);
+CloseConnectionSent:
+				cinfo[clPort].connState = AGENT_CLOSED
+
+			:: (cinfo[clPort].connState != AGENT_CONNECTED) -> 
+				/* do nothing */
+			fi
+
+		:: (cinfo[clPort].numOutstandingReqs != 0) -> 
+			/* do nothing */
+		fi;
+
+
+	:: lin?CancelRequest(clPort, msg) ->
+		d_step{
+		reqId = msg.mhdr.request_id;
+		if
+		:: ( cinfo[clPort].requested[reqId] == INUSE ) ->
+			/* we already sent the request to the server, 
+			 * so we mark it as cancelled and wait for the reply */
+			cinfo[clPort].requested[reqId] = CANCELLED
+
+		:: ( cinfo[clPort].requested[reqId] == FREE ) -> 
+			/* too late, we already replied */
+
+		:: ( cinfo[clPort].requested[reqId] == CANCELLED ) ->
+			/* was previously cancelled so just ignore */
+		fi
+		}
+		
+	od
+}
+
+
+/*--------------------------------------------------------------------------*/
+
+/* The transport process associates a connId to a message before it transmits
+ * it. At the other end, the receiving transport process checks if the received
+ * message belongs to the current connection, if not it just discards it.
+ * ConnIds are updated and synchronized each time a CloseConnection message is
+ * passed.
+ * (Note: we must ensure that the CloseConnection message will not be
+ * discarded)
+ */
+
+#define MAXCONNID	8
+#define NEXTCONNID  ((current_connId + 1) % MAXCONNID)
+
+/* Define the transport channels: Upper and Lower interfaces; 
+ * The channel array is indexed by port number 
+ */
+chan toTransportU[NUMPORTS] = [0] of {mtype, byte /*port*/, GIOPMsg };
+chan toTransportL[NUMPORTS] = [CHANLEN] of {mtype, byte /*connid*/, byte /*port*/, GIOPMsg };
+
+proctype transport(byte port; chan uin, uout)
+{
+	mtype msgType;
+	chan savedmsg = [1] of {mtype, byte, byte, GIOPMsg};
+	GIOPMsg msg;
+	byte srcport, dstport;
+	byte rcvConnId;
+	byte connId[NUMPORTS] = 0;	/* keep track of the connId for each port */
+dangerb:
+end: do
+	:: uin?msgType(dstport, msg) -> 
+		/* If we get a CloseConnection message from the upper interface, then 
+		 * we simulate closing the connection by bumping up the connId.
+		 * If there are any 'old' messages in the channel they will be
+		 * discarded on reception.
+		 */
+preempt:
+		/* send it */
+		toTransportL[dstport]!msgType(connId[dstport], port, msg); 
+
+		if
+		:: (msgType == CloseConnection) ->
+			connId[dstport] = (connId[dstport] + 1) % MAXCONNID; /*NEXTCONNID;*/
+		:: (msgType != CloseConnection) ->
+			skip
+		fi;
+		
+		/* check if we got here because of a preemption, 
+		 * if so, pop out the saved message and go back */
+		if
+		:: savedmsg?[msgType,rcvConnId,srcport,msg] -> 
+			savedmsg?msgType(rcvConnId,srcport,msg);
+			goto resume
+		:: else -> 
+			skip
+		fi
+
+	:: toTransportL[port]?msgType(rcvConnId, srcport, msg) -> 
+		/* If we get a CloseConnection message from the lower interface, then 
+		 * we simulate closing the connection by bumping up the connId.
+		 * If there are any 'old' messages in the channel they will be
+		 * discarded on reception.
+		 */
+
+resume:
+
+	if
+		/* Ensure that the received connId matches the one that we have */
+		:: ( (rcvConnId == connId[srcport]) ) ->
+dangerd:			if
+			:: uout!msgType(srcport, msg)	/* forward the message */
+			:: timeout ->
+				/* This clause gets enabled when deadlock occurs due to
+				 * a message arriving at the upper while we're processing a 
+				 * message from the lower interface... deal with it by saving 
+				 * the lower i/f message and processing the upper i/f message 
+				 * first. Afterwards, we resume and process the lower i/f 
+				 * message.
+				 */
+				savedmsg!msgType(rcvConnId,srcport,msg);
+				uin?msgType(dstport, msg);
+				goto preempt
+			fi
+
+		:: ( (rcvConnId != connId[srcport]) ) ->
+			printf("Old message encountered -> discarded\n");
+			/* discard the message (i.e don't forward it) */
+		fi;
+
+		if
+		:: (msgType == CloseConnection) ->
+			connId[srcport] = (connId[srcport] + 1) % MAXCONNID; /*NEXTCONNID;*/
+		:: (msgType != CloseConnection) ->
+			/* do nothing */
+		fi
+
+	od
+}
+
+/*--------------------------------------------------------------------------*/
+
+init
+{
+	int i;
+
+	/* create the processes from the bottom up */
+	atomic {
+		i=0;
+		do
+		::i<NUSERS ->
+			run User( toUser, toClientU );
+			i++
+		::i>=NUSERS ->
+			break
+		od;
+
+		run GIOPClient( toClientU, toUser, toClientL, toTransportU[0]);
+		run transport(0, toTransportU[0], toClientL );
+
+		run GIOPAgent(1, toAgentU[1], toServer[1], toAgentL[1], toTransportU[1] );
+		run transport(1, toTransportU[1], toAgentL[1] );
+		run Server(1,0);
+		if
+		::NSERVERS==2 ->
+			run GIOPAgent(2, toAgentU[2], toServer[2], toAgentL[2],toTransportU[2] );
+			run transport(2, toTransportU[2], toAgentL[2] );
+			run Server(2,1)
+		::NSERVERS!=2
+		fi
+	}
+}
+
+/*=========================================================================*/
+
+#define p (User[NUSERS]@URequestSent)
+#define q (User[NUSERS]@UReplyReceived)
+	/*
+	 * Formula As Typed: [](p -> <> q)
+	 * The Never Claim Below Corresponds
+	 * To The Negated Formula !([](p -> <> q))
+	 * (formalizing violations of the original)
+	 */
+
+never {    /* !([](p -> <> q)) */
+T0_init:
+	if
+	:: (1) -> goto T0_init
+	:: (! ((q)) && (p)) -> goto accept_S4
+	fi;
+accept_S4:
+	if
+	:: (! ((q))) -> goto accept_S4
+	fi
+}

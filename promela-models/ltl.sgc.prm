@@ -1,0 +1,1001 @@
+/************************************************************************
+* A Promela Model of a Procedure with Related Processes.		*
+*************************************************************************
+* Created by: Wenhui Zhang.						*
+*************************************************************************
+* Reference:								*
+* Model checking operator procedures. 					*
+* Lecture Notes in Computer Science 1680:200-215. Springer-Verlag.	*
+* Presented at the 6th International SPIN Workshop on			*
+* Practical Aspects of Model Checking.					*
+* Toulouse, France. September 1999.  					*
+************************************************************************/
+/************************************************************************
+* States 								*
+************************************************************************/
+#define Undefined							0
+#define OK								1
+#define NOK								2
+#define Normal								0
+#define Defected							1
+#define Closed		      						0
+#define Open		    						1
+#define Closing		      						2
+#define Opening		      						3
+#define Stopped		      						0
+#define Running		      						1
+#define Speed0000		      					0
+#define Speed0700		      					1
+#define Speed1400							2
+#define Speed2000							3
+#define SL330_337							0
+#define SL338_345							1
+#define SL346_353							2
+#define On		      						0
+#define Off		      						1
+#define NOTnotified							0
+#define Notified							1
+#define Initiated							0
+#define Completed							1
+/************************************************************************
+* Types									*
+************************************************************************/
+#define CtlValve							0
+#define CyclingValve		    					1
+#define Type1Valve		      					2
+#define Type2Valve		      					3
+#define Pump			    					4
+#define PumpSpeed		       					5
+#define SteamLevel		      					6
+#define ProSignal		       					7
+#define PowerLevel		      					8
+#define Supervisor		      					9
+/************************************************************************
+* Objects								*
+************************************************************************/
+#define RL33S001							0
+#define RL33S002							1
+#define RL33S003							2
+#define YB13L001							3
+#define YD13D001							4
+#define YD13Y013							5
+#define YA13S001							6
+#define YA13S002							7
+#define RY13S001							8
+#define RA13S004							9
+#define YZ630000							10
+#define RL35S001							11
+#define RL35S002							12
+#define RL35S003							13
+#define YB15L001							14
+#define YD15D001							15
+#define YD15Y013							16
+#define YA15S001							17
+#define YA15S002							18
+#define RY15S001							19
+#define RA15S004							20
+#define YZ650000							21
+#define RL72S001							22
+#define RL72S002							23
+#define RL72S003							24
+#define YB52L001							25
+#define YD12D001							26
+#define YD12Y013							27
+#define YA12S001							28
+#define YA12S002							29
+#define RY12S001							30
+#define RA52S004							31
+#define YZ620000							32
+#define RL74S001							33
+#define RL74S002							34
+#define RL74S003							35
+#define YB54L001							36
+#define YD14D001							37
+#define YD14Y013							38
+#define YA14S001							39
+#define YA14S002							40
+#define RY14S001							41
+#define RA54S004							42
+#define YZ640000							43
+#define Supervisor1							44
+#define CheckPointPowerLevel						45
+#define MainProcess							46
+byte State[47];
+/************************************************************************
+* General Definitions							*
+************************************************************************/
+#define None		    	255
+#define NOT		     	!
+#define AND		     	&&
+#define OR		      	||
+#define IMPLIES		 	->
+chan channelAction		= [0] of {byte,byte,byte};
+chan channelWait		= [0] of {byte,byte,byte};
+chan channelCheck		= [0] of {byte,byte};
+chan channelProceed		= [0] of {bool};
+chan channelValve		= [0] of {byte,byte};
+chan channelSupervisor		= [0] of {byte,byte};
+chan channelSync		= [0] of {bool};
+byte wState			= 0;
+byte wObject			= None;
+#define action(x,y,z)		channelAction!x,y,z;channelProceed?true
+#define wait(x,y,z)		channelWait!x,y,z;channelProceed?true
+#define check(x,y)		channelCheck!x,y;channelProceed?true
+#define is(x,y)			State[x]==y
+#define repairCtlValve(id)	action(CtlValve,id,Normal)
+#ifdef SPECassertion
+#define openType1Valve0(id)	action(Type1Valve,id,Open)
+#define openType1Valve(id)	assert(State[id]!=Open);openType1Valve0(id)
+#else
+#define openType1Valve0(id)	action(Type1Valve,id,Open)
+#define openType1Valve(id)	openType1Valve0(id)
+#endif
+#define closeType1Valve(id)	action(Type1Valve,id,Closed)
+#define openType2Valve(id)	action(Type2Valve,id,Open)
+#define closeType2Valve(id)	action(Type2Valve,id,Closed)
+#define startPump(id)	   	action(Pump,id,Running)
+#define stopPump(id)	    	action(Pump,id,Stopped)
+#define resetProSignal(id)      action(ProSignal,id,Off)
+#define notifySupervisor(id)    action(Supervisor,id,Notified)
+#define waitType1Valve(id,s)    wait(Type1Valve,id,s)
+#define waitSteamLevel(id,s)    wait(SteamLevel,id,s) 
+#define waitPumpSpeed(id,s)     wait(PumpSpeed,id,s)
+#define waitCyclingValve(id,s)  wait(CyclingValve,id,s)
+#define waitProcess(x,y)	State[x]==y
+#define markProcess(x,y)	State[x]=y
+#define checkThenContinue(x)    skip
+#define readMessage(x)	  	skip
+#define readDescription(x)      skip
+#define prepareToGoBack()       skip
+#define continue()       	skip
+#define randomValue1(a,x)	State[a]=x
+#define randomValue2(a,x,y)	if :: State[a]=x; :: State[a]=y; fi
+/************************************************************************
+* Communication Processes						*
+************************************************************************/
+active proctype ProcessCheck()
+{
+	byte type,object; 
+endCheck: do
+:: atomic{
+	channelCheck?type,object;
+	if
+	:: type==CtlValve; skip;
+	:: type==PowerLevel; randomValue2(CheckPointPowerLevel,OK,NOK);
+	:: else; skip;
+	fi;
+	channelProceed!true; 
+   	}
+od;
+}
+active proctype ProcessAction()
+{
+	byte type,object,state; 
+endAction: do 
+:: atomic{
+	channelAction?(type,object,state);
+	if
+	:: type==Type1Valve;
+		channelValve!state,object;
+	:: type==Supervisor;
+		run ProcessSupervisor(); channelSupervisor!state,object;
+	:: else; State[object]=state;
+	fi;
+	channelProceed!true;
+   	}
+od;
+}
+active proctype ProcessWait()
+{
+	byte type,object,state; 
+endWait: do 
+::	channelWait?(type,object,state);
+	if
+	:: atomic{type==CyclingValve;wObject=object;wState=state;}
+		atomic{channelSync?true;wObject=None;channelProceed!true;}
+	:: atomic{type==SteamLevel;wObject=object;wState=state;}
+		atomic{channelSync?true;wObject=None;channelProceed!true;}
+	:: atomic{type==PumpSpeed;wObject=object;wState=state;}
+		atomic{channelSync?true;wObject=None;channelProceed!true;}
+	:: atomic{else;State[object]==state;channelProceed!true;}
+	fi;
+od;
+}
+/************************************************************************
+* Plant Processes							*
+************************************************************************/
+proctype ProcessObjectPumpSpeed(byte speedmeter,pump)
+{
+endPumpSpeed: atomic{
+	if
+	:: State[pump]==Running;
+	   if
+	   :: State[speedmeter]==Speed0000; State[speedmeter]=Speed0700;
+	   :: State[speedmeter]==Speed0700; State[speedmeter]=Speed1400;
+	   :: State[speedmeter]==Speed1400; continue();
+	   fi;
+	:: State[pump]==Stopped;
+	   if
+	   :: State[speedmeter]==Speed1400; State[speedmeter]=Speed0700;
+	   :: State[speedmeter]==Speed0700; State[speedmeter]=Speed0000;
+	   :: State[speedmeter]==Speed0000; continue();
+	   fi;
+	fi;
+	if
+	:: wObject==speedmeter && State[wObject]==wState; channelSync!true;
+	:: else; skip;
+	fi;
+	goto endPumpSpeed;
+}}
+proctype ProcessObjectSteamLevel(byte levelmeter,valve)
+{
+endSteamLevel: atomic{
+	if 
+	:: State[valve]==Closed;
+	   if
+	   :: State[levelmeter]==SL346_353; State[levelmeter]=SL338_345;
+	   :: State[levelmeter]==SL338_345; State[levelmeter]=SL330_337;
+	   :: State[levelmeter]==SL330_337; continue();
+	   fi;
+	:: State[valve]==Open;
+	   if
+	   :: State[levelmeter]==SL330_337; State[levelmeter]=SL338_345;
+	   :: State[levelmeter]==SL338_345; State[levelmeter]=SL346_353;
+	   :: State[levelmeter]==SL346_353; continue();
+	   fi;
+	fi;
+	if
+	:: wObject==levelmeter && State[wObject]==wState; channelSync!true;
+	:: else; skip;
+	fi;
+	goto endSteamLevel;
+}}
+proctype ProcessObjectCyclingValve(byte cyclingValve)
+{	
+LabCyclingValve: atomic{
+	if
+	:: State[cyclingValve]==Closed; State[cyclingValve]=Opening;
+	:: State[cyclingValve]==Opening; State[cyclingValve]=Open;
+	:: State[cyclingValve]==Open; State[cyclingValve]=Closing;
+	:: State[cyclingValve]==Closing; State[cyclingValve]=Closed;
+	fi;
+	if
+	:: wObject==cyclingValve && State[wObject]==wState; channelSync!true;
+	:: else; skip;
+	fi;
+	goto LabCyclingValve;
+}}
+proctype ProcessObjectValve()
+{       byte id;
+endNonCtlCyclingValves:
+atomic{
+	if
+	:: channelValve?Open,id;
+	   if
+	   :: (id==RL33S001 && State[YZ630000]==Off); State[id]=Opening;
+	   :: (id==RL35S001 && State[YZ650000]==Off); State[id]=Opening;
+	   :: (id==RL72S001 && State[YZ620000]==Off); State[id]=Opening;
+	   :: (id==RL74S001 && State[YZ640000]==Off); State[id]=Opening;
+	   :: else; continue();
+	   fi;
+	:: channelValve?Closed,id; State[id]=Closing;
+	fi;
+};
+atomic{
+	if
+	:: State[id]==Closing; State[id]=Closed;
+	:: State[id]==Opening; State[id]=Open;
+	:: else; continue();
+	fi;
+}
+	goto endNonCtlCyclingValves;
+}
+proctype ProcessSupervisor()
+{	byte state,object;
+atomic{ channelSupervisor?state,object;
+#ifdef ERRORa
+	randomValue2(object,state,Undefined);
+#else
+	randomValue1(object,state);
+#endif
+}}
+/************************************************************************
+* Initialization Process						*
+************************************************************************/
+active proctype Initialization()
+{
+atomic{
+	State[RL33S002]	 		= Normal; 
+	State[RL33S002]	 		= Normal; 
+	State[RL33S002]	 		= Normal; 
+	State[RL33S002]	 		= Normal; 
+	if
+	:: randomValue2(RL33S002,Defected,Normal);		
+	:: randomValue2(RL35S002,Defected,Normal);		
+	:: randomValue2(RL72S002,Defected,Normal);		
+	:: randomValue2(RL74S002,Defected,Normal);		
+	fi;
+	State[Supervisor1]		= NOTnotified;
+	State[CheckPointPowerLevel]	= Undefined;
+	State[YZ630000]	 		= On;			   
+	State[RL33S003]	 		= Open;			 
+	State[RL33S001]	 		= Open;			 
+	State[YA13S002]	 		= Open;			 
+	State[YA13S001]	 		= Open;			 
+	State[RA13S004]	 		= Open;			 
+	State[RY13S001]	 		= Open;			 
+	State[YB13L001]	 		= SL346_353;		    
+	State[YD13D001]	 		= Running;		      
+	State[YD13Y013]	 		= Speed1400;		    
+	State[YZ650000]	 		= On;			   
+	State[RL35S003]	 		= Open;			 
+	State[RL35S001]	 		= Open;			
+	State[YA15S002]	 		= Open;		       
+	State[YA15S001]	 		= Open;		      
+	State[RA15S004]	 		= Open;		     
+	State[RY15S001]	 		= Open;		    
+	State[YB15L001]	 		= SL346_353;	      
+	State[YD15D001]	 		= Running;	       
+	State[YD15Y013]	 		= Speed1400;	    
+	State[YZ620000]	 		= On;		  
+	State[RL72S003]	 		= Open;	       
+	State[RL72S001]	 		= Open;	      
+	State[YA12S002]	 		= Open;	     
+	State[YA12S001]	 		= Open;	    
+	State[RA52S004]	 		= Open;	   
+	State[RY12S001]	 		= Open;	  
+	State[YB52L001]	 		= SL346_353;    
+	State[YD12D001]	 		= Running;     
+	State[YD12Y013]	 		= Speed1400;  
+	State[YZ640000]	 		= On;	
+	State[RL74S003]	 		= Open;     
+	State[RL74S001]	 		= Open;    
+	State[YA14S002]	 		= Open;   
+	State[YA14S001]	 		= Open;  
+	State[RA54S004]	 		= Open; 
+	State[RY14S001]	 		= Open;
+	State[YB54L001]	 		= SL346_353;	     
+	State[YD14D001]	 		= Running;	      
+	State[YD14Y013]	 		= Speed1400;	   
+}
+atomic{
+	run ProcessObjectCyclingValve(RL33S003);
+	run ProcessObjectSteamLevel(YB13L001,RL33S001);
+	run ProcessObjectPumpSpeed(YD13Y013,YD13D001);
+	run ProcessObjectCyclingValve(RL35S003);
+	run ProcessObjectSteamLevel(YB15L001,RL35S001);
+	run ProcessObjectPumpSpeed(YD15Y013,YD15D001);
+	run ProcessObjectCyclingValve(RL72S003);
+	run ProcessObjectSteamLevel(YB52L001,RL72S001);
+	run ProcessObjectPumpSpeed(YD12Y013,YD12D001);
+	run ProcessObjectCyclingValve(RL74S003);
+	run ProcessObjectSteamLevel(YB54L001,RL74S001);
+	run ProcessObjectPumpSpeed(YD14Y013,YD14D001);
+	run ProcessObjectValve();
+	run ModelProcedureDYB001();
+}}
+/************************************************************************
+* Procedure Process							*
+************************************************************************/
+proctype ModelProcedureDYB001()
+{ 	byte vReturn;
+	markProcess(MainProcess,Initiated);
+STEP_0:
+	readDescription("...");
+STEP_1:
+STEP_1_INSTRUCTION_1:
+	readMessage("...");
+STEP_2:
+STEP_2_INSTRUCTION_1:
+	readMessage("...");
+STEP_2_INSTRUCTION_2:
+	check(CtlValve,None);
+	if 
+	:: is(RL33S002,Defected); goto STEP_3_1_1;	
+	:: is(RL35S002,Defected); goto STEP_4_1_1;
+	:: is(RL72S002,Defected); goto STEP_5_1_1;
+	:: is(RL74S002,Defected); goto STEP_6_1_1;
+#ifdef ERROR2
+#else
+	:: else;		  goto STEP_2_INSTRUCTION_3;
+#endif
+	fi;
+STEP_2_INSTRUCTION_3:						
+	goto FINISH;					
+STEP_3_1_1:
+STEP_3_1_1_INSTRUCTION_1:
+	readMessage("...");
+STEP_3_1_1_INSTRUCTION_2:
+	waitCyclingValve(RL33S003,Closing);
+STEP_3_1_1_INSTRUCTION_3:
+#ifdef ERROR7RL33S001
+	openType1Valve(RL33S001);
+#else
+	closeType1Valve(RL33S001);
+#endif
+STEP_3_1_1_INSTRUCTION_4:
+	readMessage("...");
+STEP_3_1_2:
+STEP_3_1_2_INSTRUCTION_1:
+	waitSteamLevel(YB13L001,SL330_337);
+#ifdef ERROR8RL33S001
+STEP_3_1_2_INSTRUCTION_2:
+	closeType2Valve(YA13S002);
+STEP_3_1_2_INSTRUCTION_3:
+	stopPump(YD13D001);
+	closeType2Valve(YA13S001);
+#else
+STEP_3_1_2_INSTRUCTION_2:
+	stopPump(YD13D001);
+STEP_3_1_2_INSTRUCTION_3:
+	closeType2Valve(YA13S002);
+	closeType2Valve(YA13S001);
+#endif
+STEP_3_1_3:
+STEP_3_1_3_INSTRUCTION_1:
+	closeType2Valve(RA13S004);
+	closeType2Valve(RY13S001);
+#ifdef ERROR1RL33S001
+STEP_3_1_3_INSTRUCTION_2:
+	vReturn=RL33S002;
+	goto STEP_8;
+#else
+STEP_3_1_3_INSTRUCTION_2:
+	vReturn=RL33S002;
+	goto STEP_7;
+#endif
+STEP_3_2_1:
+STEP_3_2_1_INSTRUCTION_1:
+	repairCtlValve(RL33S002);
+STEP_3_2_1_INSTRUCTION_2:
+	openType1Valve(RL33S001);
+STEP_3_2_1_INSTRUCTION_3:
+	check(Type2Valve,RL33S001);
+	if
+#ifdef ERROR4RL33S001
+	:: (is(RL33S001,Opening) OR is(RL33S001,Open));
+#else
+	:: NOT (is(RL33S001,Opening) OR is(RL33S001,Open));
+#endif
+#ifdef ERROR5RL33S001
+		goto STEP_3_2_1_INSTRUCTION_2;
+#else
+		resetProSignal(YZ630000); goto STEP_3_2_1_INSTRUCTION_2;
+#endif
+	:: else; continue();
+	fi;
+STEP_3_2_1_INSTRUCTION_4:
+	waitType1Valve(RL33S001,Open);
+STEP_3_2_1_INSTRUCTION_5:
+	openType2Valve(YA13S002);
+STEP_3_2_1_INSTRUCTION_6:
+	openType2Valve(RA13S004);
+	openType2Valve(RY13S001);
+STEP_3_2_2:
+STEP_3_2_2_INSTRUCTION_1:
+	startPump(YD13D001);
+/*
+STEP_3_2_2_INSTRUCTION_2:
+	if 
+	:: NOT is(YD13D001,Running);
+		prepareToGoBack(); goto STEP_3_2_2_INSTRUCTION_1;
+	:: else; continue();
+	fi;
+*/
+#ifdef ERROR3RL33S001
+STEP_3_2_2_INSTRUCTION_3:
+	waitPumpSpeed(YD13Y013,Speed2000);
+#else
+STEP_3_2_2_INSTRUCTION_3:
+	waitPumpSpeed(YD13Y013,Speed1400);
+#endif
+STEP_3_2_2_INSTRUCTION_4:
+	openType2Valve(YA13S001);
+STEP_3_2_2_INSTRUCTION_5:
+ 	checkThenContinue("...");
+STEP_3_2_2_INSTRUCTION_6:
+	goto FINISH;
+STEP_4_1_1:
+STEP_4_1_1_INSTRUCTION_1:
+	readMessage("...");
+STEP_4_1_1_INSTRUCTION_2:
+	waitCyclingValve(RL35S003,Closing);
+STEP_4_1_1_INSTRUCTION_3:
+#ifdef ERROR7RL35S001
+	openType1Valve(RL35S001);
+#else
+	closeType1Valve(RL35S001);
+#endif
+STEP_4_1_1_INSTRUCTION_4:
+	readMessage("...");
+STEP_4_1_2:
+STEP_4_1_2_INSTRUCTION_1:
+	waitSteamLevel(YB15L001,SL330_337);
+#ifdef ERROR8RL35S001
+STEP_4_1_2_INSTRUCTION_2:
+	closeType2Valve(YA15S002);
+STEP_4_1_2_INSTRUCTION_3:
+	stopPump(YD15D001);
+	closeType2Valve(YA15S001);
+#else
+STEP_4_1_2_INSTRUCTION_2:
+	stopPump(YD15D001);
+STEP_4_1_2_INSTRUCTION_3:
+	closeType2Valve(YA15S002);
+	closeType2Valve(YA15S001);
+#endif
+STEP_4_1_3:
+STEP_4_1_3_INSTRUCTION_1:
+	closeType2Valve(RA15S004);
+	closeType2Valve(RY15S001);
+#ifdef ERROR1RL35S001
+STEP_4_1_3_INSTRUCTION_2:
+	vReturn=RL35S002;
+	goto STEP_8;
+#else
+STEP_4_1_3_INSTRUCTION_2:
+	vReturn=RL35S002;
+	goto STEP_7;
+#endif
+STEP_4_2_1:
+STEP_4_2_1_INSTRUCTION_1:
+	repairCtlValve(RL35S002);
+STEP_4_2_1_INSTRUCTION_2:
+	openType1Valve(RL35S001);
+STEP_4_2_1_INSTRUCTION_3:
+	check(Type2Valve,RL35S001);
+	if
+#ifdef ERROR4RL35S001
+	:: (is(RL35S001,Opening) OR is(RL35S001,Open));
+#else
+	:: NOT (is(RL35S001,Opening) OR is(RL35S001,Open));
+#endif
+#ifdef ERROR5RL35S001
+		goto STEP_4_2_1_INSTRUCTION_2;
+#else
+		resetProSignal(YZ650000); goto STEP_4_2_1_INSTRUCTION_2;
+#endif
+	:: else; continue();
+	fi;
+STEP_4_2_1_INSTRUCTION_4:
+	waitType1Valve(RL35S001,Open);
+STEP_4_2_1_INSTRUCTION_5:
+	openType2Valve(YA15S002);
+STEP_4_2_1_INSTRUCTION_6:
+	openType2Valve(RA15S004);
+	openType2Valve(RY15S001);
+STEP_4_2_2:
+STEP_4_2_2_INSTRUCTION_1:
+	startPump(YD15D001);
+/*
+STEP_4_2_2_INSTRUCTION_2:
+	if 
+	:: NOT is(YD15D001,Running);
+		prepareToGoBack(); goto STEP_4_2_2_INSTRUCTION_1;
+	:: else; continue();
+	fi;
+*/
+#ifdef ERROR3RL35S001
+STEP_4_2_2_INSTRUCTION_3:
+	waitPumpSpeed(YD15Y013,Speed2000);
+#else
+STEP_4_2_2_INSTRUCTION_3:
+	waitPumpSpeed(YD15Y013,Speed1400);
+#endif
+STEP_4_2_2_INSTRUCTION_4:
+	openType2Valve(YA15S001);
+STEP_4_2_2_INSTRUCTION_5:
+ 	checkThenContinue("...");
+STEP_4_2_2_INSTRUCTION_6:
+	goto FINISH;
+STEP_5_1_1:
+STEP_5_1_1_INSTRUCTION_1:
+	readMessage("...");
+STEP_5_1_1_INSTRUCTION_2:
+	waitCyclingValve(RL72S003,Closing);
+STEP_5_1_1_INSTRUCTION_3:
+#ifdef ERROR7RL72S001
+	openType1Valve(RL72S001);
+#else
+	closeType1Valve(RL72S001);
+#endif
+STEP_5_1_1_INSTRUCTION_4:
+	readMessage("...");
+STEP_5_1_2:
+STEP_5_1_2_INSTRUCTION_1:
+	waitSteamLevel(YB52L001,SL330_337);
+#ifdef ERROR8RL72S001
+STEP_5_1_2_INSTRUCTION_2:
+	closeType2Valve(YA12S002);
+STEP_5_1_2_INSTRUCTION_3:
+	stopPump(YD12D001);
+	closeType2Valve(YA12S001);
+#else
+STEP_5_1_2_INSTRUCTION_2:
+	stopPump(YD12D001);
+STEP_5_1_2_INSTRUCTION_3:
+	closeType2Valve(YA12S002);
+	closeType2Valve(YA12S001);
+#endif
+STEP_5_1_3:
+STEP_5_1_3_INSTRUCTION_1:
+	closeType2Valve(RA52S004);
+	closeType2Valve(RY12S001);
+#ifdef ERROR1RL72S001
+STEP_5_1_3_INSTRUCTION_2:
+	vReturn=RL72S002;
+	goto STEP_8;
+#else
+STEP_5_1_3_INSTRUCTION_2:
+	vReturn=RL72S002;
+	goto STEP_7;
+#endif
+STEP_5_2_1:
+STEP_5_2_1_INSTRUCTION_1:
+	repairCtlValve(RL72S002);
+STEP_5_2_1_INSTRUCTION_2:
+	openType1Valve(RL72S001);
+STEP_5_2_1_INSTRUCTION_3:
+	check(Type2Valve,RL72S001);
+	if
+#ifdef ERROR4RL72S001
+	:: (is(RL72S001,Opening) OR is(RL72S001,Open));
+#else
+	:: NOT (is(RL72S001,Opening) OR is(RL72S001,Open));
+#endif
+#ifdef ERROR5RL72S001
+		goto STEP_5_2_1_INSTRUCTION_2;
+#else
+		resetProSignal(YZ620000); goto STEP_5_2_1_INSTRUCTION_2;
+#endif
+	:: else; continue();
+	fi;
+STEP_5_2_1_INSTRUCTION_4:
+	waitType1Valve(RL72S001,Open);
+STEP_5_2_1_INSTRUCTION_5:
+	openType2Valve(YA12S002);
+STEP_5_2_1_INSTRUCTION_6:
+	openType2Valve(RA52S004);
+	openType2Valve(RY12S001);
+STEP_5_2_2:
+STEP_5_2_2_INSTRUCTION_1:
+	startPump(YD12D001);
+/*
+STEP_5_2_2_INSTRUCTION_2:
+	if 
+	:: NOT is(YD12D001,Running);
+		prepareToGoBack(); goto STEP_5_2_2_INSTRUCTION_1;
+	:: else; continue();
+	fi;
+*/
+#ifdef ERROR3RL72S001
+STEP_5_2_2_INSTRUCTION_3:
+	waitPumpSpeed(YD12Y013,Speed2000);
+#else
+STEP_5_2_2_INSTRUCTION_3:
+	waitPumpSpeed(YD12Y013,Speed1400);
+#endif
+STEP_5_2_2_INSTRUCTION_4:
+	openType2Valve(YA12S001);
+STEP_5_2_2_INSTRUCTION_5:
+ 	checkThenContinue("...");
+STEP_5_2_2_INSTRUCTION_6:
+	goto FINISH;
+STEP_6_1_1:
+STEP_6_1_1_INSTRUCTION_1:
+	readMessage("...");
+STEP_6_1_1_INSTRUCTION_2:
+	waitCyclingValve(RL74S003,Closing);
+STEP_6_1_1_INSTRUCTION_3:
+#ifdef ERROR7RL74S001
+	openType1Valve(RL74S001);
+#else
+	closeType1Valve(RL74S001);
+#endif
+STEP_6_1_1_INSTRUCTION_4:
+	readMessage("...");
+STEP_6_1_2:
+STEP_6_1_2_INSTRUCTION_1:
+	waitSteamLevel(YB54L001,SL330_337);
+#ifdef ERROR8RL74S001
+STEP_6_1_2_INSTRUCTION_2:
+	closeType2Valve(YA14S002);
+STEP_6_1_2_INSTRUCTION_3:
+	stopPump(YD14D001);
+	closeType2Valve(YA14S001);
+#else
+STEP_6_1_2_INSTRUCTION_2:
+	stopPump(YD14D001);
+STEP_6_1_2_INSTRUCTION_3:
+	closeType2Valve(YA14S002);
+	closeType2Valve(YA14S001);
+#endif
+STEP_6_1_3:
+STEP_6_1_3_INSTRUCTION_1:
+	closeType2Valve(RA54S004);
+	closeType2Valve(RY14S001);
+#ifdef ERROR1RL74S001
+STEP_6_1_3_INSTRUCTION_2:
+	vReturn=RL74S002;
+	goto STEP_8;
+#else
+STEP_6_1_3_INSTRUCTION_2:
+	vReturn=RL74S002;
+	goto STEP_7;
+#endif
+STEP_6_2_1:
+STEP_6_2_1_INSTRUCTION_1:
+	repairCtlValve(RL74S002);
+STEP_6_2_1_INSTRUCTION_2:
+	openType1Valve(RL74S001);
+STEP_6_2_1_INSTRUCTION_3:
+	check(Type2Valve,RL74S001);
+	if
+#ifdef ERROR4RL74S001
+	:: (is(RL74S001,Opening) OR is(RL74S001,Open));
+#else
+	:: NOT (is(RL74S001,Opening) OR is(RL74S001,Open));
+#endif
+#ifdef ERROR5RL74S001
+		goto STEP_6_2_1_INSTRUCTION_2;
+#else
+		resetProSignal(YZ640000); goto STEP_6_2_1_INSTRUCTION_2;
+#endif
+	:: else; continue();
+	fi;
+STEP_6_2_1_INSTRUCTION_4:
+	waitType1Valve(RL74S001,Open);
+STEP_6_2_1_INSTRUCTION_5:
+	openType2Valve(YA14S002);
+STEP_6_2_1_INSTRUCTION_6:
+	openType2Valve(RA54S004);
+	openType2Valve(RY14S001);
+STEP_6_2_2:
+STEP_6_2_2_INSTRUCTION_1:
+	startPump(YD14D001);
+/*
+STEP_6_2_2_INSTRUCTION_2:
+	if 
+	:: NOT is(YD14D001,Running);
+		prepareToGoBack(); goto STEP_6_2_2_INSTRUCTION_1;
+	:: else; continue();
+	fi;
+*/
+#ifdef ERROR3RL74S001
+STEP_6_2_2_INSTRUCTION_3:
+	waitPumpSpeed(YD14Y013,Speed2000);
+#else
+STEP_6_2_2_INSTRUCTION_3:
+	waitPumpSpeed(YD14Y013,Speed1400);
+#endif
+STEP_6_2_2_INSTRUCTION_4:
+	openType2Valve(YA14S001);
+STEP_6_2_2_INSTRUCTION_5:
+ 	checkThenContinue("...");
+STEP_6_2_2_INSTRUCTION_6:
+	goto FINISH;
+STEP_7:
+STEP_7_INSTRUCTION_1:
+	check(PowerLevel,None);
+	if
+#ifdef ERROR6
+	:: is(CheckPointPowerLevel,OK); goto STEP_7_INSTRUCTION_3;
+#else
+	:: is(CheckPointPowerLevel,OK); goto STEP_7_INSTRUCTION_2;
+#endif
+	:: is(CheckPointPowerLevel,NOK); goto STEP_7_INSTRUCTION_4;
+	fi;
+STEP_7_INSTRUCTION_2:
+	checkThenContinue("...");
+STEP_7_INSTRUCTION_3:
+	if
+	:: vReturn==RL33S002; goto STEP_3_2_1;
+	:: vReturn==RL35S002; goto STEP_4_2_1;
+	:: vReturn==RL72S002; goto STEP_5_2_1;
+	:: vReturn==RL74S002; goto STEP_6_2_1;
+	fi;
+#ifdef ERROR9
+STEP_7_INSTRUCTION_4:
+	goto FINISH;
+#else
+STEP_7_INSTRUCTION_4:
+	notifySupervisor(Supervisor1);			
+STEP_7_INSTRUCTION_5:
+	goto FINISH;
+#endif
+FINISH:
+	markProcess(MainProcess,Completed);
+}
+
+never { /*
+	!(<>(State[MainProcess]==Completed &&
+	   ((State[CheckPointPowerLevel]!=NOK ->
+	    (State[RL33S002]==Normal && State[RL35S002]==Normal &&
+	     State[RL72S002]==Normal && State[RL74S002]==Normal)) &&
+	    (State[CheckPointPowerLevel]==NOK ->
+	     State[Supervisor1]==Notified))))
+*/ /* >>10,0<< */
+accept_init:
+T0_init:
+	if
+	:: ((! ((State[MainProcess]==Completed)) ||
+	    (! ((State[RL33S002]==Normal)) &&
+	    (State[CheckPointPowerLevel]!=NOK) &&
+	    (! ((State[Supervisor1]==Notified)) &&
+	    (State[CheckPointPowerLevel]==NOK) ||
+	    (State[CheckPointPowerLevel]!=NOK) &&
+	    (! ((State[RL33S002]==Normal)) ||
+	    (! ((State[RL35S002]==Normal)) ||
+	    (! ((State[RL72S002]==Normal)) ||
+	    ! ((State[RL74S002]==Normal)))))) &&
+	    (! ((State[MainProcess]==Completed)) ||
+	    (! ((State[Supervisor1]==Notified)) &&
+	    (State[CheckPointPowerLevel]==NOK) ||
+	    (State[CheckPointPowerLevel]!=NOK) &&
+	    (! ((State[RL33S002]==Normal)) ||
+	    (! ((State[RL35S002]==Normal)) ||
+	    (! ((State[RL72S002]==Normal)) ||
+	    ! ((State[RL74S002]==Normal))))))) ||
+	    (! ((State[RL35S002]==Normal)) &&
+	    (State[CheckPointPowerLevel]!=NOK) &&
+	    (! ((State[Supervisor1]==Notified)) &&
+	    (State[CheckPointPowerLevel]==NOK) ||
+	    (State[CheckPointPowerLevel]!=NOK) &&
+	    (! ((State[RL33S002]==Normal)) ||
+	    (! ((State[RL35S002]==Normal)) ||
+	    (! ((State[RL72S002]==Normal)) ||
+	    ! ((State[RL74S002]==Normal)))))) &&
+	    (! ((State[MainProcess]==Completed)) ||
+	    (! ((State[Supervisor1]==Notified)) &&
+	    (State[CheckPointPowerLevel]==NOK) ||
+	    (State[CheckPointPowerLevel]!=NOK) &&
+	    (! ((State[RL33S002]==Normal)) ||
+	    (! ((State[RL35S002]==Normal)) ||
+	    (! ((State[RL72S002]==Normal)) ||
+	    ! ((State[RL74S002]==Normal))))))) ||
+	    (! ((State[RL72S002]==Normal)) &&
+	    (State[CheckPointPowerLevel]!=NOK) &&
+	    (! ((State[Supervisor1]==Notified)) &&
+	    (State[CheckPointPowerLevel]==NOK) ||
+	    (State[CheckPointPowerLevel]!=NOK) &&
+	    (! ((State[RL33S002]==Normal)) ||
+	    (! ((State[RL35S002]==Normal)) ||
+	    (! ((State[RL72S002]==Normal)) ||
+	    ! ((State[RL74S002]==Normal)))))) &&
+	    (! ((State[MainProcess]==Completed)) ||
+	    (! ((State[Supervisor1]==Notified)) &&
+	    (State[CheckPointPowerLevel]==NOK) ||
+	    (State[CheckPointPowerLevel]!=NOK) &&
+	    (! ((State[RL33S002]==Normal)) ||
+	    (! ((State[RL35S002]==Normal)) ||
+	    (! ((State[RL72S002]==Normal)) ||
+	    ! ((State[RL74S002]==Normal))))))) ||
+	    (! ((State[RL74S002]==Normal)) &&
+	    (State[CheckPointPowerLevel]!=NOK) &&
+	    (! ((State[Supervisor1]==Notified)) &&
+	    (State[CheckPointPowerLevel]==NOK) ||
+	    (State[CheckPointPowerLevel]!=NOK) &&
+	    (! ((State[RL33S002]==Normal)) ||
+	    (! ((State[RL35S002]==Normal)) ||
+	    (! ((State[RL72S002]==Normal)) ||
+	    ! ((State[RL74S002]==Normal)))))) &&
+	    (! ((State[MainProcess]==Completed)) ||
+	    (! ((State[Supervisor1]==Notified)) &&
+	    (State[CheckPointPowerLevel]==NOK) ||
+	    (State[CheckPointPowerLevel]!=NOK) &&
+	    (! ((State[RL33S002]==Normal)) ||
+	    (! ((State[RL35S002]==Normal)) ||
+	    (! ((State[RL72S002]==Normal)) ||
+	    ! ((State[RL74S002]==Normal))))))) ||
+	    ! ((State[Supervisor1]==Notified)) &&
+	    (State[CheckPointPowerLevel]==NOK) &&
+	    (! ((State[Supervisor1]==Notified)) &&
+	    (State[CheckPointPowerLevel]==NOK) ||
+	    (State[CheckPointPowerLevel]!=NOK) &&
+	    (! ((State[RL33S002]==Normal)) ||
+	    (! ((State[RL35S002]==Normal)) ||
+	    (! ((State[RL72S002]==Normal)) ||
+	    ! ((State[RL74S002]==Normal)))))) &&
+	    (! ((State[MainProcess]==Completed)) ||
+	    (! ((State[Supervisor1]==Notified)) &&
+	    (State[CheckPointPowerLevel]==NOK) ||
+	    (State[CheckPointPowerLevel]!=NOK) &&
+	    (! ((State[RL33S002]==Normal)) ||
+	    (! ((State[RL35S002]==Normal)) ||
+	    (! ((State[RL72S002]==Normal)) ||
+	    ! ((State[RL74S002]==Normal))))))))))))) -> goto accept_S37
+	fi;
+accept_S37:
+T0_S37:
+	if
+	:: ((! ((State[MainProcess]==Completed)) ||
+	    (! ((State[RL33S002]==Normal)) &&
+	    (State[CheckPointPowerLevel]!=NOK) &&
+	    (! ((State[Supervisor1]==Notified)) &&
+	    (State[CheckPointPowerLevel]==NOK) ||
+	    (State[CheckPointPowerLevel]!=NOK) &&
+	    (! ((State[RL33S002]==Normal)) ||
+	    (! ((State[RL35S002]==Normal)) ||
+	    (! ((State[RL72S002]==Normal)) ||
+	    ! ((State[RL74S002]==Normal)))))) &&
+	    (! ((State[MainProcess]==Completed)) ||
+	    (! ((State[Supervisor1]==Notified)) &&
+	    (State[CheckPointPowerLevel]==NOK) ||
+	    (State[CheckPointPowerLevel]!=NOK) &&
+	    (! ((State[RL33S002]==Normal)) ||
+	    (! ((State[RL35S002]==Normal)) ||
+	    (! ((State[RL72S002]==Normal)) ||
+	    ! ((State[RL74S002]==Normal))))))) ||
+	    (! ((State[RL35S002]==Normal)) &&
+	    (State[CheckPointPowerLevel]!=NOK) &&
+	    (! ((State[Supervisor1]==Notified)) &&
+	    (State[CheckPointPowerLevel]==NOK) ||
+	    (State[CheckPointPowerLevel]!=NOK) &&
+	    (! ((State[RL33S002]==Normal)) ||
+	    (! ((State[RL35S002]==Normal)) ||
+	    (! ((State[RL72S002]==Normal)) ||
+	    ! ((State[RL74S002]==Normal)))))) &&
+	    (! ((State[MainProcess]==Completed)) ||
+	    (! ((State[Supervisor1]==Notified)) &&
+	    (State[CheckPointPowerLevel]==NOK) ||
+	    (State[CheckPointPowerLevel]!=NOK) &&
+	    (! ((State[RL33S002]==Normal)) ||
+	    (! ((State[RL35S002]==Normal)) ||
+	    (! ((State[RL72S002]==Normal)) ||
+	    ! ((State[RL74S002]==Normal))))))) ||
+	    (! ((State[RL72S002]==Normal)) &&
+	    (State[CheckPointPowerLevel]!=NOK) &&
+	    (! ((State[Supervisor1]==Notified)) &&
+	    (State[CheckPointPowerLevel]==NOK) ||
+	    (State[CheckPointPowerLevel]!=NOK) &&
+	    (! ((State[RL33S002]==Normal)) ||
+	    (! ((State[RL35S002]==Normal)) ||
+	    (! ((State[RL72S002]==Normal)) ||
+	    ! ((State[RL74S002]==Normal)))))) &&
+	    (! ((State[MainProcess]==Completed)) ||
+	    (! ((State[Supervisor1]==Notified)) &&
+	    (State[CheckPointPowerLevel]==NOK) ||
+	    (State[CheckPointPowerLevel]!=NOK) &&
+	    (! ((State[RL33S002]==Normal)) ||
+	    (! ((State[RL35S002]==Normal)) ||
+	    (! ((State[RL72S002]==Normal)) ||
+	    ! ((State[RL74S002]==Normal))))))) ||
+	    (! ((State[RL74S002]==Normal)) &&
+	    (State[CheckPointPowerLevel]!=NOK) &&
+	    (! ((State[Supervisor1]==Notified)) &&
+	    (State[CheckPointPowerLevel]==NOK) ||
+	    (State[CheckPointPowerLevel]!=NOK) &&
+	    (! ((State[RL33S002]==Normal)) ||
+	    (! ((State[RL35S002]==Normal)) ||
+	    (! ((State[RL72S002]==Normal)) ||
+	    ! ((State[RL74S002]==Normal)))))) &&
+	    (! ((State[MainProcess]==Completed)) ||
+	    (! ((State[Supervisor1]==Notified)) &&
+	    (State[CheckPointPowerLevel]==NOK) ||
+	    (State[CheckPointPowerLevel]!=NOK) &&
+	    (! ((State[RL33S002]==Normal)) ||
+	    (! ((State[RL35S002]==Normal)) ||
+	    (! ((State[RL72S002]==Normal)) ||
+	    ! ((State[RL74S002]==Normal))))))) ||
+	    ! ((State[Supervisor1]==Notified)) &&
+	    (State[CheckPointPowerLevel]==NOK) &&
+	    (! ((State[Supervisor1]==Notified)) &&
+	    (State[CheckPointPowerLevel]==NOK) ||
+	    (State[CheckPointPowerLevel]!=NOK) &&
+	    (! ((State[RL33S002]==Normal)) ||
+	    (! ((State[RL35S002]==Normal)) ||
+	    (! ((State[RL72S002]==Normal)) ||
+	    ! ((State[RL74S002]==Normal)))))) &&
+	    (! ((State[MainProcess]==Completed)) ||
+	    (! ((State[Supervisor1]==Notified)) &&
+	    (State[CheckPointPowerLevel]==NOK) ||
+	    (State[CheckPointPowerLevel]!=NOK) &&
+	    (! ((State[RL33S002]==Normal)) ||
+	    (! ((State[RL35S002]==Normal)) ||
+	    (! ((State[RL72S002]==Normal)) ||
+	    ! ((State[RL74S002]==Normal))))))))))))) -> goto accept_S37
+	fi;
+accept_all:
+	skip
+}
+

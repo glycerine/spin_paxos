@@ -1,0 +1,64 @@
+/* alternating bit - version with message loss */
+
+#define MAX	1
+
+mtype = { msg0, msg1, ack0, ack1 };
+
+chan	sender  =[MAX] of { byte };
+chan	receiver=[MAX] of { byte };
+
+active proctype Sender()
+{	byte any;
+again:
+	do
+	:: receiver!msg1;
+		if
+		:: sender?ack1 -> break
+		:: sender?any /* lost */
+		:: timeout    /* retransmit */
+		fi
+	od;
+	do
+	:: receiver!msg0;
+		if
+		:: sender?ack0 -> break
+		:: sender?any /* lost */
+		:: timeout    /* retransmit */
+		fi
+	od;
+	goto again
+}
+
+active proctype Receiver()
+{	byte any;
+again:
+	do
+	:: receiver?msg1 -> sender!ack1; break
+	:: receiver?msg0 -> sender!ack0
+	:: receiver?any /* lost */
+	od;
+P0:
+	do
+	:: receiver?msg0 -> sender!ack0; break
+	:: receiver?msg1 -> sender!ack1
+	:: receiver?any /* lost */
+	od;
+P1:
+	goto again
+}
+
+never {
+	do
+	:: skip
+	:: receiver?[msg0] -> goto accept0
+	:: receiver?[msg1] -> goto accept1
+	od;
+accept0:
+	do
+	:: !Receiver[2]@P0
+	od;
+accept1:
+	do
+	:: !Receiver[2]@P1
+	od
+}

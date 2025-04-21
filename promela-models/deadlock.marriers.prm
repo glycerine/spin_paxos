@@ -1,0 +1,142 @@
+#define ORIGINAL_SUITOR 0
+#define CORRECT_SUITOR 1
+#define NPAIRS 2
+#define true 1
+#define false 0
+
+byte suitor=ORIGINAL_SUITOR
+byte weddings=0;
+bool continue_search[NPAIRS];
+bool she_is_alone[NPAIRS];
+bool he_is_alone[NPAIRS];
+byte her_pair[NPAIRS];
+byte his_pair[NPAIRS];
+
+proctype original_suitor(byte my_id)
+{
+	bool stop=false;
+	bool marriage_possible,wedding_broked;
+	byte j,bride,rival;
+
+	j=0;
+cont:	do
+	::!stop ->
+danger:		d_step{continue_search[my_id] -> stop=!he_is_alone[my_id]};
+		j=(j+1)%NPAIRS;
+		if
+		::stop -> goto cont
+		::else
+		fi;
+		bride=j;
+		marriage_possible=true;
+
+		if
+		::!marriage_possible -> goto cont
+		::else
+		fi;
+		d_step{
+			wedding_broked=!she_is_alone[bride];
+			rival=her_pair[bride];
+			she_is_alone[bride]=false;
+			her_pair[bride]=my_id
+		};
+		d_step{
+			he_is_alone[my_id]=false;
+			his_pair[my_id]=bride;
+			continue_search[my_id]=false
+		};
+		if
+		::wedding_broked ->
+			d_step{he_is_alone[rival]=true;
+			continue_search[rival]=true}
+		::else
+			weddings=weddings+1
+		fi;
+		if
+		::(weddings==NPAIRS) ->
+			rival=0;
+			do
+			::rival<NPAIRS -> continue_search[rival]=true; rival++
+			::rival>=NPAIRS -> break
+			od
+		::else
+		fi
+	::else -> break
+	od
+}
+
+proctype correct_suitor(byte my_id)
+{
+	bool stop=false;
+	bool marriage_possible,wedding_broked;
+	byte j,bride,rival;
+
+	j=0;
+cont:	do
+	::!stop ->
+		d_step{continue_search[my_id] -> stop=!he_is_alone[my_id]};
+		j=(j+1)%NPAIRS;
+		if
+		::stop -> goto cont
+		::!stop
+		fi;
+		bride=j;
+		marriage_possible=true;
+
+		if
+		::!marriage_possible -> goto cont
+		::marriage_possible
+		fi;
+		d_step{
+			wedding_broked=!she_is_alone[bride];
+			rival=her_pair[bride];
+			she_is_alone[bride]=false;
+			her_pair[bride]=my_id;
+			he_is_alone[my_id]=false;
+			continue_search[my_id]=false
+		};
+		his_pair[my_id]=bride;
+		if
+		::wedding_broked ->
+			d_step{
+				he_is_alone[rival]=true;
+				continue_search[rival]=true
+			}
+		::!wedding_broked ->
+			weddings=weddings+1
+		fi;
+		if
+		:: (weddings==NPAIRS) ->
+			rival=0;
+			do
+			::rival<NPAIRS -> continue_search[rival]=true; rival++
+			::rival>=NPAIRS -> break
+			od
+		:: (weddings!=NPAIRS)
+		fi
+	::stop -> break
+	od
+}
+
+init
+{
+	byte proc=NPAIRS;
+
+        atomic{
+		do
+		::proc>0 ->
+			proc--;
+			he_is_alone[proc]=true;
+			she_is_alone[proc]=true;
+			continue_search[proc]=true;
+			if
+			:: (suitor==ORIGINAL_SUITOR) -> run original_suitor(proc)
+			:: (suitor==CORRECT_SUITOR) -> run correct_suitor(proc)
+			fi
+                :: proc==0 ->
+                        break
+                od
+        }
+}
+
+

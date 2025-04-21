@@ -1,0 +1,57 @@
+#define MAX_PHILOSOPHERS N
+
+mtype={fork}
+#define left forks[my_id]
+#define right forks[(my_id+1)%MAX_PHILOSOPHERS]
+
+chan forks[MAX_PHILOSOPHERS] = [1] of {bit};
+
+proctype philosopher(int my_id)
+{
+	do
+	::d_step{(left?[fork] && right?[fork]) -> left?fork; right?fork}
+	/*::atomic{left?fork -> /* try to get left fork */
+		/*right?fork;} /* try to get right fork */
+		/* eat... */
+eat:		d_step{left!fork; right!fork} /* release forks */
+		/* meditation... */
+	od
+}
+
+init
+{
+	byte philosophers=MAX_PHILOSOPHERS;
+
+	atomic{
+		do
+		::philosophers>0 ->
+			philosophers--;
+			run philosopher(philosophers);
+			forks[philosophers]!fork
+		::philosophers==0 ->
+			break
+		od
+	}
+}
+
+#define p	philosopher[1]@eat
+#define q	philosopher[2]@eat
+
+	/*
+	 * Formula As Typed: []  (p -> <>  q)
+	 * The Never Claim Below Corresponds
+	 * To The Negated Formula !([]  (p -> <>  q))
+	 * (formalizing violations of the original)
+	 */
+
+never {    /* !([]  (p -> <>  q)) */
+T0_init:
+	if
+	:: (! ((q)) && (p)) -> goto accept_S4
+	:: (1) -> goto T0_init
+	fi;
+accept_S4:
+	if
+	:: (! ((q))) -> goto accept_S4
+	fi;
+}

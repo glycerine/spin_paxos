@@ -1,0 +1,198 @@
+mtype = {on,off,dial,disconnect,oring,tring,unobt,engaged,speech,hung_up,connected};
+
+chan one = [1] of {chan};
+chan two = [1] of {chan};
+chan three = [1] of {chan};
+chan four = [1] of {chan};
+
+chan sync[5] = [0] of {mtype};
+chan null = [1] of {chan};
+
+typedef array{bit to [5]};
+array connect[5];
+
+mtype event1=on;
+mtype event2=on;
+mtype event3=on;
+mtype event4=on;
+
+chan partner1=null;
+chan partner2=null;
+chan partner3=null;
+chan partner4=null;
+
+proctype User(chan self,linea,lineb,linec,partner; mtype event)
+{
+
+mtype dev=on;
+chan x = [1] of {chan};
+mtype z=on;
+
+end:
+idle:	assert(dev==on && partner==null);
+	if
+	:: atomic{empty(self) -> event=off; dev=off; self!self}; goto diall
+		/* no connection is being attempted, go offhook */
+		/* and become originating party */
+
+	:: atomic{full(self) -> self?partner; self!partner};
+		/* a connection is being attempted */
+		/* either become terminating party */
+		/* or connection attempt is cancelled and remain in idle state */
+
+			if
+			:: atomic{sync[partner]?z; self?x; partner=null; goto idle}
+			:: goto talert
+			fi
+
+	fi;
+
+diall:	assert(dev==off && full(self) && partner==null);
+	if
+	:: event=dial;
+		/* dial and then nondeterministic choice of called party */
+		if
+		:: partner=self; goto calling
+		:: partner=linea; goto calling
+		:: partner=lineb; goto calling
+		:: partner=linec; goto calling
+		fi
+		:: atomic{event=on; dev=on; self?x; goto idle}
+			/*go onhook, without dialling */
+		fi;
+
+calling:	assert(dev==off);
+		if
+		:: partner==null -> goto unobta
+			/* invalid partner */
+		:: partner==self -> goto busy
+			/* invalid partner */
+		:: else ->
+			if
+			:: partner!self -> goto oalert
+				/* valid partner, write token to partner's channel */
+			:: atomic {full(partner) -> goto busy}
+				/* valid partner but engaged */
+			fi
+
+		fi;
+
+unobta: 	assert(full(self));
+		event=unobt;
+		if
+		:: event=dial; goto unobta
+			/* trivial dial */
+		:: atomic {event=on; dev=on; partner=null;
+			self?x; assert(x==self); goto idle}
+			/* go onhook, cancel connection attempt */
+		fi;
+
+busy:	assert(full(self));
+	event=engaged;
+	if
+	:: event=dial; goto busy
+		/* trivial dial */
+	:: atomic{event=on; dev=on; partner=null;
+		self?x; assert (x==self); goto idle}
+		/* go onhook, cancel connnection attempt */
+	fi;
+
+oalert:	assert(full(partner) && full(self) && dev==off);
+	event=oring; atomic{self?x; self!x}
+	/*check channel */
+	if
+	:: (x==partner) -> goto oconnected
+		/* correct token */
+	:: (x!=partner) -> goto oalert
+		/* wrong token, try again */
+	:: (x!=partner) -> goto oringout
+		/* wrong token, given up */
+	:: event=dial; goto oalert
+		/* trivial dial */
+	fi;
+
+oringout:
+danger: atomic{sync[self]!hung_up; event=on; dev=on};
+	atomic{self?x; partner=null; goto idle};
+	/* give up, go onhook */
+
+oconnected: assert (full(self) && full(partner));
+	atomic{sync[self]!connected; goto otalk};
+
+otalk:	assert(full(self) && full(partner));
+	/* connection established */
+	connect[self].to[partner]=1;
+	goto oclose;
+
+oclose:	assert(full(self) && full(partner));
+	/* disconnect */
+	connect[self].to[partner]=0;
+	atomic {event=on; dev=on;
+		self?x; assert (x==partner);
+		partner?x; partner!x; assert (x==self);
+		partner=null;
+		goto idle};
+		/* empty own channel and check partner's channel */
+
+talert:	assert(dev==on);
+	/* either connection attempt is cancelled and then empty channel */
+	/* or device rings */
+
+	if
+	:: atomic{sync[partner]?z; event=disconnect};
+		atomic{self?x; partner=null; goto idle}
+	::event=tring; goto tpickup
+	fi;
+
+tpickup: atomic{event=off; dev=off};
+	/* either connection attempt is cancelled and then empty channel */
+	/* or proceed with connection and write token to partner's channel */
+
+	if
+	::atomic{sync[partner]?z; event=disconnect; event=on; dev=on};
+		atomic{self?x; partner=null; goto idle}
+	::atomic{partner?x; partner!self; goto tconnected}
+	fi;
+
+tconnected:
+	/* read sync variable */
+	sync[partner]?z;
+	if
+	:: atomic{z==connected -> goto ttalk}
+		/* connection established */
+	:: atomic {z==hung_up -> event=on; dev=on};
+		atomic{self?x; assert(x==partner); partner=null; goto idle}
+		/* connection attempt is cancelled, empty channel */
+	fi;
+
+ttalk:	if
+	:: atomic{empty(partner) -> event=on; dev=on;
+		self?x; assert(x==partner); partner=null; goto idle}
+		/* connection is cancelled by originating party */
+		/* go onhook and empty channel */
+	fi;
+
+} /* end User */
+
+init
+{
+	atomic{
+#if N>0
+		run User(one,two,three,four,partner1,event1);
+#endif
+#if N>1
+		run User(two,three,four,one,partner2,event2);
+#endif
+#if N>2
+		run User(three,four,one,two,partner3,event3);
+#endif
+#if N>3
+		run User(four,one,two,three,partner4,event4);
+#endif
+	}
+}
+
+
+			
+
+

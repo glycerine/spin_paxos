@@ -1,0 +1,55 @@
+#define NSTATIONS N
+
+#define true 1
+#define false 0
+
+/* pure message-passing version! */
+chan station_control[NSTATIONS] = [1] of {byte}; /* instead of bool busy[NSTATIONS];*/
+
+
+chan up[NSTATIONS] = [1] of { byte };
+chan down[NSTATIONS] = [1] of { byte };
+
+mtype = { start, attention, data, stop, control }
+
+proctype station(byte id; chan in, out)
+{
+danger0:
+	do
+	:: in?start ->
+danger1:	station_control[id]?control; /* instead of atomic{!busy[id] -> busy[id]=true};*/
+		out!attention;
+		do
+		::in?data -> out!data
+		::in?stop -> break
+		od;
+		out!stop;
+		station_control[id]!control /* instead of busy[id]=false */
+	:: station_control[id]?control; /* instead of atomic{!busy[id] -> busy[id]=true}; */
+		out!start;
+danger2:	in?attention;
+		do
+		::out!data -> in?data
+		::out!stop -> break
+		od;
+		in?stop;
+		station_control[id]!control /* instead of busy[id]=false */
+	od
+}
+
+init
+{
+	byte nstations=NSTATIONS;
+	atomic{
+		do
+		::nstations>0 ->
+			nstations--;
+			station_control[nstations]!control;
+			run station(nstations, down[nstations], up[nstations]);
+			run station(nstations, up[(nstations+1)%NSTATIONS],down[(nstations+1)%NSTATIONS])
+		::nstations==0 -> break
+		od
+	}
+}
+
+

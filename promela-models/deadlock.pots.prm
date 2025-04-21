@@ -1,0 +1,454 @@
+/* Stefan Leue - 19 September 1998 */
+
+/* --------------------------------------------------------------------------- */
+
+/* POTS - Phone Centric Model */
+
+/*
+
+This POTS model is based on the Feature Interaction Workshop 1998
+Contest model by Griffeth et al. Comments 'POTS n' refer 
+to the bubble number n in the POTS description of Appendix B.
+Note that the correspondence between these labels and locations
+in the Promela code can only be approximate.
+
+Some of the design choices are:
+
+
+*/
+
+/* --------------------------------------------------------------------------- */
+
+#define FALSE	0
+#define TRUE	1
+
+#define IDLE    0
+#define BUSY    1
+
+/* Semaphores */
+
+#define p 0
+#define v 1
+
+/* physical number of phones/users */
+#define NUM_PHONES   3
+
+/* --------------------------------------------------------------------------- */
+
+/* System ressources */
+
+/* --------------------------------------------------------------------------- */
+
+chan phone_PhoneHandler[NUM_PHONES] = [0] of {mtype, byte, byte};
+chan PhoneHandler_phone[NUM_PHONES] = [0] of {mtype, byte, byte};
+chan PhoneHandler_in[NUM_PHONES]    = [0] of {mtype, byte, byte};
+chan PhoneHandler_OS                = [0] of {mtype, byte, byte, byte, byte};
+
+/* Not currently needed: */
+
+/* chan Switch_SCP                   = [1] of {mtype};*/
+/* chan SCP_Switch                   = [1] of {mtype};*/
+/* chan SCP_OS                       = [1] of {mtype};*/
+
+/* Global state control variables, manipulated by Switch and Handler Processes.      */
+/* The main purpose of these variables is their use in LTL formulas and never claims */
+/* phone_state is also used to determine idle/busy of a phone during call processing */
+
+/* phone_state[phone number] = 0: idle, =1: busy */
+bit phone_state[NUM_PHONES] = 0;
+
+/* dialed_state[phone number] :  which phone has phone number dialed */
+/*                               = NUM_PHONES: no number dialed      */
+/* reset with either busy tone, on hook or connection established    */
+byte dialed_state[NUM_PHONES] = NUM_PHONES;
+
+/* connect_state[phone number] : which phone is phone number connected to */
+/*                               =NUM_PHONES: unconnected                 */
+byte connect_state[NUM_PHONES] = NUM_PHONES;
+
+/* tone_state[phone number] : which tones are currently applied to phone number */
+/*                            = 0: no tones                                     */
+/*                            = 1: dial tone                                    */
+/*                            = 2: ring tone                                    */
+/*                            = 3: audible ring tone                            */
+/*                            = 4: busy tone                                    */
+byte tone_state[NUM_PHONES] = 0;
+
+/* --------------------------------------------------------------------------- */
+
+/* messages */
+
+/* --------------------------------------------------------------------------- */
+
+mtype = {
+
+/* Phone to PhoneHandler */
+Off_Hook,  
+On_Hook,
+Dial,
+Flash,
+
+/* PhoneHandler to Phone */
+DialTone,
+Start_AudibleRinging,
+Start_Ringing,
+Start_CallWaitingTone,
+Stop_AudibleRinging,
+Stop_Ringing,
+Stop_CallWaitingTone,
+Line_Busy_Tone,
+Announce,
+Disconnect,
+Display,
+
+/* PhoneHandler to SCP */
+Trigger,
+Resource,
+
+/* SCP to PhoneHandler */
+Response,
+
+/* PhoneHandler/SCP to OS */
+LogBegin,
+LogEnd,
+
+/* Internal messages: PhoneHandler to PhoneHandler */
+con_req,     /* request a connection */
+con_con,     /* confirm a connection */
+dis_req,     /* request disconnect   */
+dis_con,     /* confirm disconnect   */
+con_est      /* connection has been established */
+
+}
+
+/* end messages */
+
+/* --------------------------------------------------------------------------- */
+
+/* proctype definitions */
+
+/* --------------------------------------------------------------------------- */
+
+/* phone: simulate user/phone behaviour to originate/terminate calls */
+proctype phone (byte me; chan from_Sw, to_Sw ) {
+
+byte callee = NUM_PHONES; /* =3 undefined, to detect missing initialization */
+byte A, B = NUM_PHONES;   /* dummies to take parameter fields               */
+
+/* phone will attempt at most one call origination, but will always answer  */
+/* incoming calls - that's what we need this toggle switch for              */
+bit call_not_made = TRUE;
+
+
+endidle1:                                            /* we're idle but haven't yet made a call */
+do
+:: atomic {from_Sw?Start_Ringing(A, B) ->            /* we'll terminate the call */
+              goto terminator}
+:: atomic {to_Sw!Off_Hook(me, 0);                    /* we'll originate a call */
+              goto awaiting_dialtone}                /* POTS 1 */
+od;
+
+
+endidle2:                                            /* we're idle and have already made a call */
+do
+:: atomic {from_Sw?Start_Ringing(A, B) ->            /* we'll terminate the call */
+              goto terminator}                       /* POTS 4 */
+od;
+
+
+terminator: /* we're being called */                 /* POTS 4 */
+
+if
+:: atomic{from_Sw?Stop_Ringing(B, A) -> goto end}    /* party went on-hook       */ /* POTS 14 */
+:: atomic{TRUE -> to_Sw!Off_Hook(me, 0);             /* POTS 5 */
+             goto expect_stop_ringing}               /* we're answering the call */ 
+fi;
+
+
+expect_stop_ringing:                                        /* POTS 6 */
+
+atomic{from_Sw?Stop_Ringing(B, A) -> goto conversation}     /* phone stops ringing and we go to */
+                                                            /* conversation state               */
+
+
+awaiting_dialtone: /* we're waiting for dial tone */ /* POTS 2 */
+
+if
+:: atomic{ from_Sw?Start_Ringing(A, B) ->            /* if there was a race condition and the switch sent us a */ 
+                                                     /* ring tone before we get the dial tone, then */
+                                                     /* we'll terminate the call */
+              goto expect_stop_ringing}
+:: atomic{ from_Sw?DialTone(A, 0) -> 
+              call_not_made = FALSE; 
+              goto dialtone_received }
+fi;
+   
+dialtone_received: /* we've got dial tone and may now place call */ /* POTS 2 */
+
+/* determine randomly, who should be called (= callee)     */
+/* don't call yourself                                     */
+/* could be changed so that self-calling would be possible */
+atomic{
+   if
+   :: me == 0 -> 
+          if
+          :: callee = 1;
+          :: callee = 2;
+          fi;
+   :: me == 1 -> 
+          if
+          :: callee = 0;
+          :: callee = 2;
+          fi;
+   :: me == 2 -> 
+          if
+          :: callee = 0;
+          :: callee = 1;
+          fi;
+   fi;
+   if   /* POTS 2 */
+     :: TRUE -> to_Sw!Dial(me, callee); goto party_dialed /* either dial your party */ /* POTS 3 */
+     :: TRUE -> to_Sw!On_Hook(me, 0); goto end            /*   or go on hook        */ /* POTS 17 */
+   fi};
+
+
+party_dialed: /* we're waiting for busy or audible ringing */ /* POTS 3 */
+
+atomic{
+   if 
+     :: from_Sw?Line_Busy_Tone(A, B) -> to_Sw!On_Hook(me, 0); /* POTs 14 */
+                               goto end                   /* party busy */
+     :: from_Sw?Start_AudibleRinging(A, B) ->             /* party idle and ringing */ /* POTS 4 */
+                goto awaiting_conversation
+   fi};
+
+
+awaiting_conversation: /* party is ringing */ 
+
+atomic{from_Sw?Stop_AudibleRinging(A, B) -> goto conversation}; /* party picked up */ /* POTS 6 */
+
+
+conversation: /* we can chat now                                                 */ 
+              /* the conversation is terminated either by us going on-hook or by */
+              /* disconnect from the switch (because our party hung up           */
+              /* POTS 6 */
+
+atomic{
+   if
+   :: to_Sw!On_Hook(me, 0); goto end                      /* we're going on-hook */ /* POTS 7 */
+   :: from_Sw?Disconnect(A, B) -> to_Sw!On_Hook(me, 0);   /* party went on-hook */  /* POTS 10 */
+                                  goto end                 
+   fi};
+
+
+end: /* POTS 9 POTS 12 */
+if
+:: call_not_made -> goto endidle1;  /* we haven't yet originated a call */
+:: else goto endidle2;              /* we have already originated a call and will only answer incoming calls */
+fi;
+
+}
+/* end phone */
+
+/* --------------------------------------------------------------------------- */
+
+/* PhoneHandler: handle phone */
+proctype PhoneHandler (byte A; chan phone_in, phone_out, in) {
+                           /* A is the phone that's being handled */
+                           /* phone_in is channel from phone we are handling */
+                           /* phone_out is channel to phone we are handling */
+                           /* in: incoming channel for internal communication from other Handlers */
+
+byte B = NUM_PHONES;     /* B is partner for call                              */
+byte X, Y = NUM_PHONES;  /* dummies to carry message parameters when receiving */
+byte time = NUM_PHONES;  /* dummy for representing arbitrary time              */
+
+bit ORIGINATOR = TRUE;
+
+endidle:
+do
+:: atomic {phone_in?Off_Hook(X, Y) ->
+              ORIGINATOR = TRUE; 
+              tone_state[A] = 1;
+              phone_state[A] = BUSY;
+              phone_out!DialTone(A, 0); 
+              goto await_number}
+
+:: atomic {in?con_req(B, A) -> 
+              ORIGINATOR = FALSE;
+              tone_state[A] = 2;
+              phone_state[A] = BUSY;                        /* set A BUSY                                */
+              phone_out!Start_Ringing(A, B);                /* ring callee B                             */
+              PhoneHandler_in[B]!con_con(B, A);
+              goto expect_offhook_A}                        /* wait for A to answer call                 */
+od;
+
+await_number:
+if 
+:: atomic{ phone_in?Dial(X, B) ->                        /* A dials phone B - bind value of B here */ /* POTS 3 */
+      dialed_state[A] = B;                          /* remember that A attempted to call B    */
+      PhoneHandler_in[B]!con_req(A, B) ;
+      goto await_con_req_response }
+
+:: atomic{ phone_in?On_Hook(X, Y) ->                     /* A goes on hook */
+      tone_state[A] = 0;                               /* remove dial tone (no message for this) */
+      phone_state[A] = IDLE;                            /* set A idle                             */
+      goto endidle }  
+
+:: atomic{ in?con_req(X, Y) -> 
+     PhoneHandler_in[X]!dis_req(X, Y);                            /* we're busy */
+     goto await_number}
+fi;
+
+
+
+
+expect_offhook_A:
+
+if
+:: atomic{ phone_in?Off_Hook(X, Y) ->                /* A goes off hook */ /* POTS 5 */
+   tone_state[A] = 0;
+   phone_out!Stop_Ringing(A, B);                 /* stop ringing B             */
+   connect_state[A] = B;                                /* connect A and B            */
+   PhoneHandler_in[B]!con_est(A, B);
+   goto conversation }                             
+
+:: atomic{ in?con_req(X, Y) -> 
+    PhoneHandler_in[X]!dis_req(X, Y);                            /* we're busy */
+    goto expect_offhook_A }
+fi;
+
+
+await_con_req_response:
+
+if
+:: atomic { in?con_con(X, Y) -> 
+      tone_state[A] = 3;
+      phone_out!Start_AudibleRinging(A, B);   /* audible ring to A                         */ /* POTS 4 */ 
+      goto await_con_est }
+
+:: atomic { in?dis_req(X, Y) ->
+      tone_state[A] = 4;       
+      phone_out!Line_Busy_Tone(A, 0);         /* give A busy tone                          */ /* POTS 15 */
+      goto expect_onhook_A }
+
+:: atomic{ in?con_req(X, Y) ->                /* this must be another phone than B */
+      PhoneHandler_in[X]!dis_req(X, Y);             /* we're busy */
+      goto await_con_req_response }
+fi;
+
+
+await_con_est:
+
+if
+:: atomic {in?con_est(X, Y) -> 
+   tone_state[A] = 0;
+   phone_out!Stop_AudibleRinging(A, B);          /* stop audible ringtone at A */ /* POTS 6 */
+   connect_state[A] = B;                               /* connect A and B            */
+   if
+   :: ORIGINATOR == TRUE ->
+        PhoneHandler_OS!LogBegin(A, B, A, time);
+   :: else skip;
+   fi;
+   goto conversation};  
+
+:: atomic { in?con_req(X, Y) -> 
+   PhoneHandler_in[X]!dis_req(X, Y);                            /* we're busy */
+   goto await_con_est}
+fi;     
+
+
+expect_onhook_A:                                /* wait for A to go on hook */
+
+if
+:: atomic {phone_in?On_Hook(X, Y) ->                    /* A goes on hook                   */
+      dialed_state[A] = NUM_PHONES;                 /* A does no longer                 */ 
+                                                    /* attempt to call any other party  */
+      phone_state[A] = IDLE;                        /* set A idle                       */
+      goto endidle}
+:: atomic{ in?con_req(X, Y) -> 
+      PhoneHandler_in[X]!dis_req(X, Y);                            /* we're busy */
+      goto expect_onhook_A}
+fi;
+
+
+conversation:
+
+if
+:: atomic{ phone_in?On_Hook(X, Y) ->                /* A goes on hook */ /* POTS 7 */
+      connect_state[A] = NUM_PHONES;                /* disconnect A                        */
+      phone_state[A] = IDLE;                        /* set A idle                          */
+      if
+      :: ORIGINATOR == TRUE ->
+         PhoneHandler_OS!LogEnd(A, B, time, 0);      /* stop logging call                   */ /* POTS 8 */
+      :: else skip
+      fi;
+      conversation1:
+      if 
+      :: PhoneHandler_in[B]!dis_req(A, B) ->         /* we'll try to send a disconnect request to our party */
+         goto endidle;
+      :: in?dis_req(X, Y) ->                         /* if our party did the same, then that's fine as well */
+         goto endidle;
+      :: in?con_req(X, Y) -> 
+           PhoneHandler_in[X]!dis_req(X, Y);                            /* we're busy */
+           goto conversation1;
+      fi};
+:: atomic{ in?dis_req(X, Y) ->
+      if
+      :: ORIGINATOR == TRUE ->
+         PhoneHandler_OS!LogEnd(A, B, time, 0);              /* stop logging call                   */ /* POTS 11 */
+      :: else skip;
+      fi;
+      phone_out!Disconnect(A, B);                   /* tell A that conversation terminated */
+      goto expect_onhook_A};                         /* wait for A to go on hook            */
+
+:: atomic{ in?con_req(X, Y) -> 
+      PhoneHandler_in[X]!dis_req(X, Y);                            /* we're busy */
+      goto conversation};
+fi;
+
+}
+/* end PhoneHandler */
+
+
+/* --------------------------------------------------------------------------- */
+
+/* SCP: accept and handle calls to IN features */
+proctype SCP () {
+end: skip;
+}
+/* end SCP */
+
+/* --------------------------------------------------------------------------- */
+
+/* OS: accept logging start/end messages for billing purposes */
+proctype OS (chan in) {
+
+byte A, B, time = NUM_PHONES; /* local vars to get message parameters */
+
+endlogging: do
+:: in?LogBegin(A, B, A, time)
+:: in?LogEnd(A, B, A, time)
+od;
+
+end: skip;
+}
+/* end OS */
+
+
+/* --------------------------------------------------------------------------- */
+
+init 
+{
+  end: atomic{ 
+    run phone(0, PhoneHandler_phone[0], phone_PhoneHandler[0]);
+    run phone(1, PhoneHandler_phone[1], phone_PhoneHandler[1]);
+    run phone(2, PhoneHandler_phone[2], phone_PhoneHandler[2]);
+    run PhoneHandler (0, phone_PhoneHandler[0], PhoneHandler_phone[0], PhoneHandler_in[0]);
+    run PhoneHandler (1, phone_PhoneHandler[1], PhoneHandler_phone[1], PhoneHandler_in[1]);
+    run PhoneHandler (2, phone_PhoneHandler[2], PhoneHandler_phone[2], PhoneHandler_in[2]);
+/*  run SCP(); */
+    run OS(PhoneHandler_OS); 
+    }
+
+}

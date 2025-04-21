@@ -1,0 +1,14 @@
+This directory contains a set of test models for HSF-SPIN. Most of them have been taken from the database of promela models available at
+
+http://www.informatik.uni-freiburg.de/~lafuente/models/models.html.
+
+We would like to thank the authors of the models for their contribution.
+
+Some of the models have been modified, for example, in order to seed errors. Many of the models are parametrizable. Parameters have been named N and M (no model requires more than two parameters). For example, if you wish to generate a verifier for a configuration deadlock version of the giop protocol with 2 users and 1 client you would type: hsf-spin -a -DN=2 -DM=3 models/deadlock.giop.prm.
+
+The prefix of the files indicate the type of error present in the model. Following errors prefixes are used:
+ 	- deadlock: Presence of deadlock states.
+	- assertion: violation of an assertion.
+	- endstate: Presence of valid endstates.
+	- ltl.invariant: Violation of an invariant.
+	- ltl : Visolation of an ltl formula.

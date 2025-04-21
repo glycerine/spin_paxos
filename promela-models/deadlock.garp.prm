@@ -1,0 +1,272 @@
+/* PROMELA Validation Model GARP (main) */
+
+/*#include "garp.defines"*/
+/* PROMELA Validation Model GARP (Global Definitions) */
+
+#define N_APL 2 /* number of applicants */
+#define N_RGS 1 /* number of registrar */
+#define N_LVAL 1 /* number of leaveall */
+
+#define true 1
+#define false 0
+
+#define out 1
+#define lanx 2
+#define in 3
+#define vanx 4
+
+#define out_reg 1
+#define awt_rjin 2
+#define lv_imm 3
+#define in_reg 4
+
+mtype = { reqjoin, reqleave, join, leave, leaveall };
+
+chan user_to_appl[N_APL]=[0] of {byte};
+chan appl_to_llc[N_APL]=[0] of {byte};
+chan llc_to_appl[N_APL]=[1] of {byte};
+chan regist_to_llc[N_RGS]=[0] of {byte};
+chan llc_to_regist[N_RGS]=[1] of {byte};
+chan leaveall_to_llc[N_LVAL]=[0] of {byte};
+chan llc_to_leaveall[N_LVAL]=[1] of {byte};
+
+byte r_state;
+/*#include "garp.macuser"*/
+/* PROMELA Validation Model GARP (MAC Service User) */
+
+proctype macuser(byte n)
+{
+danger:	do
+	::user_to_appl[n]!reqjoin
+	::user_to_appl[n]!reqleave
+	::break
+	od
+}
+
+/*#include "garp.macuser1"*/
+/* PROMELA Validation Model GARP (MAC Service User 1) */
+
+proctype macuser1(byte n)
+{
+danger:	if
+	::user_to_appl[n]!reqjoin
+	::user_to_appl[n]!reqleave
+	::skip
+	fi
+}
+/*#include "garp.llc"*/
+/* PROMELA Validation Model GARP (LLC Service) */
+
+proctype llc()
+{
+	byte type;
+
+	endIDLE:
+	do
+	::atomic{
+		appl_to_llc[0]?type ->
+		if
+		::llc_to_appl[1]!type; llc_to_regist[0]!type
+		::llc_to_appl[1]!type
+		::llc_to_regist[0]!type
+		:: skip /* lose message */
+		fi
+		}
+	::atomic{
+		appl_to_llc[1]?type ->
+		if
+		::llc_to_appl[0]!type; llc_to_regist[0]!type
+		::llc_to_appl[0]!type
+		::llc_to_regist[0]!type
+		:: skip /* lose message */
+		fi
+		}
+	::atomic{
+		regist_to_llc[0]?type ->
+		if
+		::llc_to_appl[0]!type; llc_to_appl[1]!type
+		::llc_to_appl[0]!type
+		::llc_to_appl[1]!type
+		::skip /* lose message */
+		fi
+		}
+	::atomic{
+		leaveall_to_llc[0]?type ->
+		if
+		::llc_to_appl[0]!type; danger: llc_to_appl[1]!type
+		::llc_to_appl[0]!type
+		::llc_to_appl[1]!type
+		::skip /* lose message */
+		fi
+		}
+	od
+}
+
+/*#include "garp.applicant"*/
+/* PROMELA Validation Model GARP (Applicant) */
+proctype applicant(byte n)
+{
+	bool jointimer;
+	byte type, state;
+
+danger:	state=out;
+	endIDLE:
+	do
+	::user_to_appl[n]?type -> /* event from macuser */
+		if
+		::(type==reqjoin) ->
+			if
+			::(state==out) ->
+				jointimer=true;
+				appl_to_llc[n]!join;
+				state=lanx
+			::(state==lanx) /* ignore */
+			::(state==in) /* ignore */
+			::(state==vanx) /* ignore */
+			::else -> assert(0) /* protocol violation */
+			fi
+		::(type==reqleave) ->
+			if
+			::(state==out) /* ignore */
+			::(state==lanx) ->
+				jointimer=false;
+				appl_to_llc[n]!leave;
+				state=out
+			::(state==in) ->
+				appl_to_llc[n]!leave;
+				state=out
+			::(state==vanx) ->
+				jointimer=false;
+				appl_to_llc[n]!leave;
+				state=out
+			::else -> assert (0) /* protocol violation */
+			fi
+		::else /* ignore */
+		fi
+	::llc_to_appl[n]?type -> /* event from llc */
+		if
+		::(type==join) ->
+			if
+			::(state==out) /* ignore */
+			::(state==lanx) ->
+				jointimer=true;
+				state=in
+			::(state==in) /* ignore */
+			::(state==vanx) ->
+				jointimer=true;
+				state=lanx
+			::else -> assert(0) /* protocol violation */
+			fi
+		::(type==leave) || (type==leaveall) ->
+			if
+			::(state==out) /* ignore */
+			::(state==lanx) ->
+				jointimer=true;
+				state=vanx
+			::(state==in) ->
+				jointimer=true;
+				state=vanx
+			::(state==vanx) ->
+				jointimer=true
+			::else -> assert(0) /* protocol violation */
+			fi
+		::else /* ignore */
+		fi
+	::empty(user_to_appl[n]) && empty(llc_to_appl[n]) && (jointimer==true) -> /* jointimer expired */
+		if
+		::(state==lanx) ->
+			jointimer=false;
+			appl_to_llc[n]!join;
+			state=in
+		::(state==vanx) ->
+			jointimer=false;
+			appl_to_llc[n]!join;
+			state=in
+		:: else -> assert(0) /* protocol violation */
+		fi
+	od
+}
+/*#include "garp.registrar"*/
+/* PROMELA Validation Model GARP (Registrar) */
+
+proctype registrar(byte n)
+{
+	bool leavetimer, member_exist;
+	byte type;
+
+danger:	r_state=out_reg;
+	endIDLE:
+	do
+	:: llc_to_regist[n]?type -> /* event from llc */
+		if
+		::(type==join) ->
+			if
+			::(r_state==out_reg) ->
+				member_exist=true;
+				r_state=in_reg
+			::(r_state==awt_rjin) ->
+				leavetimer=false;
+				r_state=in_reg
+			::(r_state==lv_imm) ->
+				leavetimer=false;
+				r_state=in_reg
+			::(r_state==in_reg) /* ignore */
+			::else -> assert(0) /* protocol violation */
+			fi
+		::(type==leave) || (type==leaveall) ->
+			if
+			::(r_state==out_reg) /* ignore */
+			::(r_state==awt_rjin) ->
+				leavetimer=true
+			::(r_state==lv_imm) ->
+				leavetimer=true
+			::(r_state==in_reg) ->
+				leavetimer=true;
+				r_state=awt_rjin
+			::else -> assert(0) /* protocol violation */
+			fi
+		::else /* ignore */
+		fi
+	::empty(llc_to_regist[n]) && (leavetimer==true) -> /* leavetimer expired */
+		if
+		::(r_state==awt_rjin) ->
+			regist_to_llc[n]!leave;
+			r_state=lv_imm
+		::(r_state==lv_imm) ->
+			leavetimer=false;
+			member_exist=false;
+			r_state=out_reg
+		::else -> assert(0) -> /* protocol violation */
+		fi
+	od
+}
+/*#include "garp.leaveall"*/
+/* PROMELA Validation Model (Leave All) */
+
+proctype leaveallpro(byte n)
+{
+	bool leavealltimer;
+	byte type, state;
+
+	leavealltimer=true; /* leavealltimer on */
+
+	endIDLE:
+danger:	do
+	::llc_to_leaveall[n]?type /* ignore */
+	::empty(llc_to_leaveall[n]) && (leavealltimer==true) -> /* leavealltimer expired */
+		leaveall_to_llc[n]!leaveall
+	od
+}
+
+init
+{
+	atomic{
+	run macuser(0); run macuser1(1);
+	run llc();
+	run applicant(0); run applicant(1);
+	run registrar(0);
+	run leaveallpro(0);
+	}
+}
+
+

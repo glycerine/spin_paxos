@@ -1,0 +1,170 @@
+#define true 1
+#define false 0
+
+#define LEVELS N
+
+/* Global Variables */
+bool elevator_opened=false;
+int elevator_pos=0;
+bool elevator_stopped=true;
+bool elevator_upward=false;
+
+/*#include "Elevator.prm"*/
+/* Events */
+bool elevator_tick;
+
+proctype elevator()
+{
+	
+	/* Set up initial values */
+	elevator_tick=0; 
+	elevator_pos=0;
+	elevator_stopped=true;
+	elevator_upward=true;
+	elevator_opened=false;
+
+	/* Wait for ticks */
+	do
+	::elevator_tick->
+		if
+		::!elevator_stopped ->
+			if
+			::elevator_upward -> 
+		    		if
+				::(elevator_pos < (LEVELS-1) ) ->
+					printf("Elevator moving upward to pos %d\n",elevator_pos+1);
+					elevator_pos++
+				::else -> elevator_stopped = true
+		  		fi
+			::else ->
+				if
+				::(elevator_pos > 0) ->
+					printf("Elevator moving downward to pos %d\n",elevator_pos-1);
+					elevator_pos--
+		    		::else -> elevator_stopped = true
+				fi
+			fi
+		::else -> skip
+		fi;
+		elevator_tick=0
+	od
+}
+
+/*#include "Level.prm"*/
+/* Global Variables */
+bool level_requested[LEVELS];
+
+proctype level(int pos)
+{
+	
+	level_requested[pos]=0;
+	do
+	::!level_requested[pos] ->
+		printf("Request on level %d\n",pos);
+		level_requested[pos]=true
+		/* Whenever there is no request in this level,
+		a request can arise */
+	od
+}
+
+/*#include "SimpleController.prm"*/
+/* Events */
+bool controller_tick;
+
+proctype controller()
+{
+	int target;
+
+	controller_tick=0;
+
+	do
+	::controller_tick ->
+		target=0;
+		do
+		::(target < LEVELS) ->
+	      		if
+			::level_requested[target] -> break
+			::else -> skip
+			fi;
+			target++
+		::(target >= LEVELS) -> break
+		od;
+		if
+		::(target < LEVELS) ->
+			if
+			::(target == elevator_pos) ->
+				if
+				::elevator_opened ->
+					printf("Controller closing the elevator in level %d...\n",elevator_pos);
+					level_requested[target] = false;
+					elevator_opened=false
+				::((!elevator_opened) && elevator_stopped) ->
+					printf("Controller opening the elevator in level %d...\n",elevator_pos);
+					elevator_opened=true
+				::else ->
+					printf("Controller stopping the elevator in level %d...\n",elevator_pos);
+					elevator_stopped = true
+				fi
+			::else ->
+				printf("Controller moving the elevator...\n");
+				elevator_stopped = false;
+				elevator_upward = (target > elevator_pos)
+			fi
+		::else ->
+			elevator_opened=elevator_opened
+		fi;
+		controller_tick=0
+	od
+}
+
+
+/* Does not fulfill Simulation.safety.ltl */
+/*#include "Simulation.safety.ltl"*/
+#define p elevator_opened
+#define q elevator_stopped
+	/*
+	 * Formula As Typed: [](p -> q)
+	 * The Never Claim Below Corresponds
+	 * To The Negated Formula !([](p -> q))
+	 * (formalizing violations of the original)
+	 */
+
+never {    /* !([](p -> q)) */
+T0_init:
+	if
+	:: (! ((q)) && (p)) -> goto accept_all
+	:: (1) -> goto T0_init
+	fi;
+accept_all:
+	skip
+}
+
+#ifdef NOTES
+If the elevator is opened, then the elevator is stopped.
+#endif
+#ifdef RESULT
+
+#endif
+
+init
+{
+	int i;
+
+	i=0;
+	/* launch the processes */
+	atomic{
+		run elevator();
+		run controller();
+		do
+		::(i<LEVELS) -> run level(i); i++
+		::(i>=LEVELS) -> break
+		od;
+	}
+
+	do
+	::skip ->
+		atomic{controller_tick=1; controller_tick==0};
+		atomic{elevator_tick=1; elevator_tick==0};
+	od
+}
+

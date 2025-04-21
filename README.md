@@ -988,7 +988,7 @@ for, whose changes could be arbitrary).
 > these basic steps), and the cluster continues 
 > servicing requests throughout the change. 
 >   -- Ongaro 2014, Raft dissertaion Abstract, page iv.
-
+https://github.com/ongardie/dissertation https://raft.github.io/
 
 ![rafting.png](rafting.png)
 image caption: White water rafting with an even number is

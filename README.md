@@ -983,6 +983,10 @@ for, whose changes could be arbitrary).
 > servicing requests throughout the change. 
 >   -- Ongaro 2014, Raft dissertaion Abstract, page iv.
 
+
+![white_water_rafting.png](white_water_rafting.png)
+White water rafting image from https://www.checkyeti.com/blog/en/rafting
+
 We've got to maintain and update membership, 
 so delegrating the real work elsewhere just adds
 dependencies and to my thinking, is a cheap ducking

@@ -683,7 +683,7 @@ protection barrier -- not unlike how the earth's
 atmosphere protects it from cosmic rays. The first
 sperm to wiggle through the zona pellucida causes a massive wave
 of calcium release to flash through the plasma of the oocyte,
-signalling (broadcasting to all receptors) on the entire 
+signaling (broadcasting to all receptors) on the entire 
 egg surface that the first sperm has arrived, and 
 inducing depolarization at the zona pellucida 
 that locks out other sperm. This is called the fast block

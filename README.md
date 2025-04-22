@@ -543,12 +543,14 @@ higher ballot number).
 
 What does a successful write entail? 
 We must get a quorum of acceptors to write the
-same value to stable disk, that value will
+same value to stable disk. Once written, that value will
 never change in future ballots (for a single
 instance of Paxos), even if we over-write
 it multiple times through the Paxos state
-machine. Once chosen, the value is idempotent to
-higher future Paxos ballots. Lower ones
+machine. A quorum of accepted values on disk
+means the value is chosen. Once chosen, 
+the value is idempotent to higher future 
+Paxos ballots. Lower ones
 are ruled out by the promise-to-ignore
 them mechanism. Of course, higher
 ballots will re-write the same value 
@@ -558,9 +560,13 @@ by a quorum. That is what allows messages
 to come in late or be duplicated, and not
 mess things up. Nodes can crash and restart,
 and miss messages, but the register is 
-idempotent; locked-in.
+idempotent; locked-in. Notice that the local
+node doesn't know if the cat is alive or
+dead. It just follows the protocol. 
+State is diffused, so local the status is a mystery
+until the learner gets a quorum of reports.
 
-So the Paxos protocol prevents changing the
+The Paxos protocol prevents changing the
 value once chosen. Interestingly, chosen
 is not a property of a single node, but
 only of any subset of nodes >= quorum. That is, in the 

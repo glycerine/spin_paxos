@@ -765,7 +765,7 @@ must proceed to do a full quorum
 read, and then check for the flag.
 Again we can finish early at that
 point if all we are doing is read.
-If the quorum read tells us the
+If any returned flag of the quorum read tells us the
 value is already chosen, we 
 can also short-circuit writes
 at this point. There's little
@@ -780,7 +780,7 @@ when we learned about the chosen status?
 They won't know that a 
 value was chosen, and so won't
 know to set their "chosen flag".
-Thus they might run a round on recovery
+Thus they might run a full all-phases round on recovery
 to find out.
 If we use the flag optimization
 suggested above, then this makes

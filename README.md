@@ -245,7 +245,7 @@ and what I'm about to reveal can be unintuitive.
 To me, this is a key understanding that will save you
 from many false pre-conceptions if you go in holding
 this knowledge in mind. This is it: state is diffused.
-Simple to say, but this is deeper that it appears at first.
+Simple to say, but this is deeper than it appears at first.
 
 State, aka "the most recent version things", is not local anymore.
 This sounds obvious, but it is actually subtle. State

@@ -1203,9 +1203,12 @@ because he's talking about his babies (brain children).
 MultiPaxos with its leader lease and Raft with its
 strong leader also commit in one round trip (optimal)
 on the happy path. 
-But also, he's not wrong. See the whole discussion
-and mantra above on "state is diffused over a quorum".
-Birman is saying that doesn't have to be the case.
+(To be fair, at the time, Paxos didn't come with 
+leaders and leases, it was leaderless originally.)
+But also, he's not wrong about the local read thing.
+See the whole discussion and mantra above on 
+"state is diffused over a quorum".
+Birman is saying that doesn't have to be the case(!)
 With the a different algorithm, you might be able 
 to reliably return local reads without a network quorum check.
 This has obvious performance benefits.

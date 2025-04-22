@@ -205,9 +205,10 @@ that Paxos addresses. The consensus problem
 wants a fault-tolerant (a minority of 
 cluster nodes can die), write-once register,
 that can be contended for by any number
-of external clients. In is worth keeping
-in mind too that the solution comes
-with the following constraint: we can
+of external clients. 
+
+It is worth keeping in mind too that the solution comes
+with a constraint: we can
 only tolerate a certain number of node
 failures at any one time. Let's call this
 failure count F, naturally enough. The
@@ -216,10 +217,10 @@ our cluster needs to still be correct
 if there are only ever F failures at once.
 Since the solution needs a majority
 of nodes to not have failed, we are going
-to need to run 2*F + 1 nodes. For example,
+to need to run 2 * F + 1 nodes. For example,
 to survive F=1 failures, we need to run
-2*1 + 1 = 3 nodes. To survive F=2 failures,
-we need to run 2*2+1 = 5 nodes, and so on.
+2 * 1 + 1 = 3 nodes. To survive F=2 failures,
+we need to run 2 * 2 + 1 = 5 nodes, and so on.
 The makes perfect sense, since we will use a
 majority to break the symmetry of the
 tied situation under a split-brain partition,

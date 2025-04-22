@@ -1185,7 +1185,7 @@ basis for iCloud and SnowflakeDB).
 
 Anyway, virtual synchrony is a whole other topic.
 The essential difference is that they don't use
-majorities (quorums) and will fail an operation even
+majorities (quorums) and will fail an operation if
 even one member goes down. Let's leave that topic
 for another day for now. It is a whole other paradigm really.
 It needs a good, eager failure detector beyond

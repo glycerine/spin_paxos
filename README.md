@@ -159,7 +159,7 @@ the non-nil value, we know
 the value is be locked-in and will not change. 
 Okay, small subtlety: the value might get 
 re-written with a higher version 
-number Re-writing might seem dangerous in
+number. Re-writing might seem dangerous in
 that it introduces an extra disk
 based vulnerability to corruption, but 
 we ignore these things in this solution --

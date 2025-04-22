@@ -996,6 +996,38 @@ but then Section 4.3, pages 43 - 45 contradict
 the opening abstract claim of single node updates.
 https://github.com/ongardie/dissertation https://raft.github.io/
 
+See also important bug fix to the single server
+update protocol here.
+https://groups.google.com/g/raft-dev/c/t4xj6dJTP6E/m/d2D9LrWRza8J
+
+which I'll quote the summary for
+
+> The solution I'm proposing is exactly like the 
+> dissertation describes except that a leader may 
+> not append a new configuration entry until it has 
+> committed an entry from its current term.
+>
+> In a typical Raft implementation, a leader appends 
+> a no-op entry to the log when it is elected. This 
+> change would mean rejecting or delaying membership 
+> change requests until the no-op entry is committed.
+
+and later in the thread, an explanation that the
+publish papers describe "Joint Consensus" that
+allows larger membership changes and does not appear
+to have the one server bug/fix needed. 
+
+> There's two versions of the paper, a slightly 
+> shorter version published in USENIX ATC '14 and 
+> the "extended version" posted on the Internet at 
+> the same time. These were written before 
+> single-server-at-a-time membership changes were 
+> developed, so they describe the older joint 
+> consensus approach instead.
+
+The log cabin example code also does the joint consensus,
+according to the dissertation section 4.3.
+
 ![rafting.png](rafting.png)
 Image caption: White water rafting with an even number is
 especially dangerous, since split votes are common. We

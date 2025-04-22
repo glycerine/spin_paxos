@@ -411,8 +411,12 @@ they would serve stale reads. This is part of why the
 lease itself must be confirmed through
 the consensus process itself, and partly why
 sometimes we must just wait it out and let the last lease expire.
-If you do not have consensus on a lease, you 
-don't really have any hope of correctness.
+If you do not have consensus on a lease, and moreover
+if you don't know absolutely, positively that no other
+node has a current lease, don't really have 
+any hope of correctness. Thus availability gaps
+are going to be inherent in optimizations that
+deploy leases/use time-outs to detect failures.
 
 When studying single-decree Paxos (Synod), it is best just to
 ignore leaders and leases, and tuck such 
@@ -1045,7 +1049,7 @@ archeologist, and expressed mostly in terms of an
 extensive metaphor for a Greek parliament, makes it hard to follow.
 Lamport even dressed up as Indiana Jones for his 
 lectures on it, back in the day, he tells us.
-We humans can _really_ dig our metaphors.
+We computer scientists (humans?) can _really_ dig our metaphors.
 Maybe a bit too much, at times.
 
 This is the widely acknowledged reason for the idea that Paxos is

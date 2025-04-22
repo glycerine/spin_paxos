@@ -1174,7 +1174,7 @@ Alex is talking about is a different use of
 the word. That is referring to the early Ken Birman/Cornell
 (and his academic offspring) Virtual Synchrony approach, 
 aka Group Communication, aka
-Group Membership Services of Totem/ISIS/Spread Toolkit, also used
+Group Membership Services of Totem/ISIS/Transis/Spread Toolkit, also used
 in FoundatationDB (but not really documented; we only
 know this because Alex worked on FoundationDB internals, 
 and says it is "heavily" based on that approach.

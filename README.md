@@ -996,7 +996,7 @@ still not sure that it is correct. Leader election
 in Raft is equivalent to a full Paxos round,
 since the request for votes is the prepare 1a
 phase, and any new leader must immediately
-commits a no-op entry to its log, completing the 2a
+commit a no-op entry to its log, completing the 2a
 accept phase, and avoiding the livelock noted
 by Howard 2014 (https://www.cl.cam.ac.uk/techreports/UCAM-CL-TR-857.html 
 Section 4.3). See the discussion of Raft below

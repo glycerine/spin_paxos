@@ -1154,7 +1154,12 @@ aka Group Communication, aka
 Group Membership Services of Totem/ISIS/Spread Toolkit, also used
 in FoundatationDB (but not really documented; we only
 know this because Alex worked on FoundationDB internals, 
-and says it is "heavily" based on that approach). 
+and says it is "heavily" based on that approach.
+It is open source, of course, and so anyone is
+free to discover this themselves; https://github.com/apple/foundationdb
+Apple bought them to create iCloud; FoundationDB is the
+basis for iCloud and SnowflakeDB). 
+
 Anyway, virtual synchrony is a whole other topic.
 The essential difference is that they don't use
 majorities (quorums) and will fail an operation even

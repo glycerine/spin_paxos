@@ -1146,6 +1146,31 @@ It does not push the problem off to another
 external (Paxos) service rather than 
 taking responsibility and solving it itself.
 
+Notice that the "Reconfiguration based Replication" that
+Alex is talking about is a different use of 
+the word. That is referring to the early Ken Birman/Cornell
+Virtual Synchrony approach, aka Group Communication, aka
+Group Membership Services of Totem/ISIS/Spread Toolkit, also used
+in FoundatationDB (but not really documented; we only
+know this because Alex worked on FoundationDB internals, 
+and says it is "heavily" based on that approach). 
+Anyway, virtual synchrony is a whole other topic.
+The essential difference is that they don't use
+majorities (quorums) and will fail an operation even
+even one member goes down. Let's leave that topic
+for another day for now. It is a whole other paradigm really.
+If you are interested, there are some notes I made
+a decade ago on it here
+https://github.com/glycerine/spread-src-4.4.0
+These were primarily used over multicast LAN networks.
+Multicast is rarely available to us these days since
+it does share/play nicely with others and needs a
+tightly controlled setup. All cloud providers turn
+it off. Anyway. FoundationDB is super impressive,
+and still shows that the approach has legs, even if
+will need some deep understanding and adaptation
+to your network circumstances. But I digress.
+
 In an amusing reversal on intent, Alex gives the above
 Venn diagram to suggest that Raft is a good
 idea only at an intersection of concerns.

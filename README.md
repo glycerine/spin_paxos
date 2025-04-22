@@ -1028,6 +1028,10 @@ Notes: I actually don't recommend starting here. The
 conceit of this algorithm being "discovered" by an
 archeologist, and expressed mostly in terms of an
 extensive metaphor for a Greek parliament, makes it hard to follow.
+Lamport even dressed up as Indiana Jones for his 
+lectures on it, back in the day, he tells us.
+We computer scientists can _really_ dig our metaphors.
+Maybe a bit too much, at times.
 
 This is the widely acknowledged reason for the idea that Paxos is
 hard to understand. So, you should be aware of this paper so

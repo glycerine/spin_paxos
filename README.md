@@ -249,9 +249,35 @@ local state in single-decree Paxos, and you might
 blithely assume that, of course, this is already
 done, but beware: it is not. Again, this is
 an algorithm designed by a very
-clever mathematician in the 1980s, with apparently little
-little regard for modern software engineering 
-practices.
+clever mathematician in the 1980s. Sure,
+he got the Nobel prize of computer science
+for it (the Turing award), but the algorithm
+is still kind of missing alot of the stuff that we
+would normally consider good computer science 
+practice today. That's part of the reason
+it took so long to get published too.
+More on that later. For now just know, this "boiled
+down to its essentials" problem was really
+chosen to make the only thing that really matters
+here possible: actually proving it works. The
+proof must show that we get
+a write-once register while operating in
+an extra-ordinarily hostile environment. 
+
+This is the part that is also probably new to you,
+coming into distributed systems: you are
+now dealing with a much more hostile environment
+than you may be used to. You are used
+to a nice, warm cozy sane model of a single computer, and now
+you are in the freezing tundra with hostile
+adversaries everywhere. Early networks were
+super slow and flakey, and TCP had not been
+adopted. People used unreliable multi-cast for
+performance. It's was a different world. But,
+if you can build an algorithm that survives it,
+you have really got a valuable thing, ready
+for today's large clusters that encounter 
+a node failure of some kind every couple of hours.
 
 Here is an example that shows how a read from a 
 single replica node is insufficient. Suppose one node

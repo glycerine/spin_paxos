@@ -1159,17 +1159,34 @@ The essential difference is that they don't use
 majorities (quorums) and will fail an operation even
 even one member goes down. Let's leave that topic
 for another day for now. It is a whole other paradigm really.
+It needs a good failure detector beyond
+mere time-outs (Telegraf from TimescaleDB?). 
+This is what Alex is getting at
+when he mentions "gray failures" are the added challenge
+for reconfiguration-based-replication.
 If you are interested, there are some notes I made
 a decade ago on it here
-https://github.com/glycerine/spread-src-4.4.0
-These were primarily used over multicast LAN networks.
-Multicast is rarely available to us these days since
+https://github.com/glycerine/spread-src-4.4.0 with
+the caveat that Birman's critique of quorums
+as "always" needing two-phase is a little disingenuous --
+he knows better, but you cut him some slack 
+because he's talking about his babies (brain children).
+MultiPaxos with its leader lease and Raft with its
+strong leader also commit in one round trip (optimal)
+on the happy path. Anyway. Virtual syncrhony was 
+primarily used over multicast LAN networks.
+Multicast is rarely available to us these days 
+outside of a co-located NASDAQ feed in New Jersey, and since
 it doesn't share/play nicely with others and needs a
-tightly controlled setup. All cloud providers turn
-it off. Anyway. FoundationDB is super impressive,
-and shows that the approach still has legs, even if
+tightly controlled setup, it is demanding. 
+All cloud providers turn it off. All that said,
+FoundationDB is super impressive;
+it is evidence that a non-quorum approach still has legs, even if
 will need some deep understanding and adaptation
-to your network (TCP) circumstances. But I digress.
+to your network (TCP) circumstances. This is the
+kind of distinction that Alex is trying to get
+at, but to fully appreciate it, I readily admit, will need more
+comprehension and reading on my part.
 
 In an amusing reversal on intent, Alex gives the above
 Venn diagram to suggest that Raft is a good

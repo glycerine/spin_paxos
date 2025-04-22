@@ -175,7 +175,7 @@ minority of the cluster has a different
 value that won't make it to the end. In fact
 the client that originally wanted the final
 chosen value may be long dead and gone. The
-remaining live nodes "come to consensus" or
+remaining live nodes might well "come to consensus" or
 "chose" a value which no client cares about
 anymore. This does not matter/is not in scope.
 (But it does make this a case of wondering:

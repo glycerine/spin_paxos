@@ -1183,7 +1183,11 @@ on the happy path.
 But also, he's not wrong. See the whole discussion
 and mantra above on "state is diffused over a quorum".
 Birman is saying that doesn't have to be the case.
-Anyway. Virtual syncrhony was primarily used 
+With the a different algorithm, you might be able 
+to reliably return local reads without a network quorum check.
+This has obvious performance benefits.
+Anyway. Read his history of the field (https://www.cs.cornell.edu/ken/History.pdf)
+for more context. Virtual synchrony was primarily used 
 over multicast LAN networks. Multicast is rarely available to us these days 
 outside of a co-located NASDAQ feed in New Jersey, and since
 it doesn't share/play nicely with others and needs a

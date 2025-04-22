@@ -322,16 +322,27 @@ than you may be used to. You are used
 to a nice, warm cozy sane model of a single computer, and now
 you are in the freezing tundra with hostile
 adversaries everywhere. Early networks were
-super slow and flaky, and TCP had not been
-adopted. People used unreliable multi-cast for
-performance. It's was a different world. But,
+super slow and flaky, and long-distance links
+meant delays were wildly different from 
+different nodes. TCP had barely been invented,
+and had not been universally adopted. 
+People used unreliable multi-cast for
+performance. It was a different world. But,
 if you can build an algorithm that survives it,
 you have really got a valuable thing, ready
 for today's large clusters that encounter 
 a node failure of some kind often.
-Google expects a 2000 node cluster
-to encounter a new fault every 2.5 hours,
-for example. (Was that from the SRE book? todo: find that reference).
+The more nodes in your cluster, the higher
+the frequency of some kind of failure.
+One example I read said that Google expects a 2000 node cluster
+to encounter a new fault every 2.5 hours
+(Was that from the SRE book? todo: find that reference).
+Typically you therefore want much smaller
+clusters, this being the prime reason. Early
+Google publications said they used 500
+nodes in a cluster. That probably reduces
+the MTBF (mean time between failures) to
+a day or two. But I digress.
 
 Here is an example that shows how a read from a 
 single replica node is insufficient. Suppose one node

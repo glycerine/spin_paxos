@@ -156,10 +156,12 @@ read, or depending on when we read it. If
 we don't get nil, we can cache the value
 safetly, since it won't change. After getting
 the non-nil value, we know
-the value is be locked-in and will not change. 
-Okay, small subtlety: the value might get 
+the value is truly and forever locked-in and will not change.
+Never, ever. Okay wait, a small subtlety: the same value might get 
 re-written with a higher version 
-number. Re-writing might seem dangerous in
+number alongside it on disk. The ballot number
+associated with the value on disk can increment.
+Re-writing might seem dangerous in
 that it introduces an extra disk
 based vulnerability to corruption, but 
 we ignore these things in this solution --

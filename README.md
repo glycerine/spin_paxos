@@ -292,8 +292,13 @@ and then they know it. Could they then proceed
 to mark that version of the value locally as the
 chosen one, saving any future reads/writers from
 going through the whole protocol? Sure, but single
-decree Paxos does not do this. It would be one
-of a plethora of optimizations possible. So keep
+decree Paxos does not do this. (Maybe to save
+a disk write, which is a very slow operation,
+even though it could happen the background and
+might save many other writes in the future. More
+likely it is left out because as an optimization,
+it is extraneous to establishing a correctness proof.)
+It would be one of a plethora of optimizations possible. So keep
 that in mind: there are "obvious" optimizations
 that would translate the diffuse state into
 local state in single-decree Paxos, and you might

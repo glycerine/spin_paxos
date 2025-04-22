@@ -848,7 +848,7 @@ predict the future, perhaps we can still
 exert some control over it. That is what the promise does.
 
 > "Prediction is hard. Especially about the future."
->  -- Danish humorous proverb. https://quoteinvestigator.com/2013/10/20/no-predict/
+>  -- Danish humorous proverb.
 
 The other two phases are a very straight forward
 version of two-phase commit. You just

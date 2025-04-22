@@ -1149,7 +1149,8 @@ taking responsibility and solving it itself.
 Notice that the "Reconfiguration based Replication" that
 Alex is talking about is a different use of 
 the word. That is referring to the early Ken Birman/Cornell
-Virtual Synchrony approach, aka Group Communication, aka
+(and his academic offspring) Virtual Synchrony approach, 
+aka Group Communication, aka
 Group Membership Services of Totem/ISIS/Spread Toolkit, also used
 in FoundatationDB (but not really documented; we only
 know this because Alex worked on FoundationDB internals, 

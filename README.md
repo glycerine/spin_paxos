@@ -116,10 +116,78 @@ Iulian Moraru, David G. Andersen, Michael Kaminsky, 2013.
 https://www.cs.cmu.edu/~dga/papers/epaxos-sosp2013.pdf
 https://github.com/efficient/epaxos
 
-On understanding Paxos: an open secret
+On understanding Paxos: the open secrets
 --------------------------------
 
-Let me provide a hint up front. This is kind of an
+Let me provide two hints up front. 
+
+First, the stated goal is too vague in the original 
+papers, so I'll clarify that immediately. 
+What are we trying to do in single decree Paxos?
+
+We are trying to create a write-once register.
+
+The register is either nil (unwritten) or the register has been 
+written (a value chosen) and now it can never be changed. 
+
+We can read the register any number of times.
+
+We will get either nil or a value. If we get a value, that value
+has been persisted on disk by a majority of
+the cluster. We call such a value chosen. The
+hardest part of designing Paxos is to
+guarantee that value doesn't change once
+chosen by a majority with its value safely
+on disk, in the presence of multiple 
+incoming writers who want to write 
+different values. Oh, and I almost forgot to mention. We
+also have to implement this write once register
+in the presense of arbitrary machine crashes
+and restarts, and a flaky network that can
+reorder, drop, or delay our messages.
+
+That is the problem being solved, and setting
+in which it is solved. The essential safety
+proof just shows that by following the rules,
+the cluster of server nodes will "choose"
+or lock-in, only a single value. Never two
+different values that change after being
+read, or depending on when we read it. If
+we don't get nil, we can cache the value
+safetly, since it won't change. After getting
+the non-nil value, we know
+the value is be locked-in and will not change. 
+Okay, small subtlety: the value might get 
+re-written with a higher version 
+number Re-writing might seem dangerous in
+that it introduces an extra disk
+based vulnerability to corruption, but 
+we ignore these things in this solution --
+it was designed by a mathematician thinking
+about an idealized stable storage.
+
+In short, the register itself is write-once,
+and doesn't change once established. At 
+least that is the goal. We'll see during the
+algorithm execution that there might be
+some false starts, where temporarily some
+minority of the cluster has a different
+value that won't make it to the end. In fact
+the client that originally wanted the final
+chosen value may be long dead and gone. The
+remaining live nodes "come to consensus" or
+"chose" a value which no client cares about
+anymore. This does not matter/is not in scope.
+(But it does make this a case of wondering:
+are you sure this is the correct problem to be solving?) 
+That's is outside the scope of the challenge
+that Paxos addresses. The consensus problem
+wants a fault-tolerant (a minority of 
+cluster nodes can die), write-once register,
+that can be contended for by any number
+of external clients.
+
+Second, and this is kind of an
 open secret about single-decree Paxos. It
 represents a paradigm shift in thinking, going
 from single-computer systems to distributed systems,

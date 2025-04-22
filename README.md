@@ -326,12 +326,13 @@ is their guarantee to not participate in any
 quroums other than those proposed by the leader,
 during the lease time. They must be actively
 ignoring/rejecting other leaders during the lease time.
-A minority (patitioned scenario) must not be able to
-think they have an overlapping lease, because
-they would serve stale reads. This is why the
+No node must ever think they have an overlapping lease, because
+they would serve stale reads. This is part of why the
 lease itself must be confirmed through
-the consensus process itself. If you do not have consensus
-on a lease, you do not have a lease at all!
+the consensus process itself, and partly why
+sometimes we must just wait it out and let the last lease expire.
+If you do not have consensus on a lease, you 
+don't really have any hope of correctness.
 
 When studying single-decree Paxos (Synod), it is best just to
 ignore leaders and leases, and tuck such 

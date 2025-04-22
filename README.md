@@ -563,8 +563,9 @@ and miss messages, but the register is
 idempotent; locked-in. Notice that the local
 node doesn't know if the cat is alive or
 dead. It just follows the protocol. 
-State is diffused, so local the status is a mystery
-until the learner gets a quorum of reports.
+State is diffused, so locally the chosen status
+remains a mystery until the learner gets 
+a quorum of reports.
 
 The Paxos protocol prevents changing the
 value once chosen. Interestingly, chosen

@@ -167,16 +167,24 @@ based vulnerability to corruption, but
 we ignore these things in this solution --
 it was designed by a mathematician thinking
 about an idealized stable storage. We could
-easily read it first and not re-write it
-to disk if it is already what we want; but
-I digress. The point was really to 
-emphasisze an un-intuitive aspect of Paxos:
+easily read it first and not re-write the value
+part to disk if it is already what we want; but
+the increasing ballot part would need to 
+be re-written to disk. But I digress. 
+The point was really to emphasisze another
+non-obvious aspect of Paxos:
 that there can be temporary false starts,
 values written to disk are actually later
 over-written with new, updated values.
 Just because a value is on disk, does not
 mean it has been chosen by a majority.
 Until that happens, it might change.
+And even after that happens, the same value
+might get over-written again, or temporary
+losing values might get overwritten with 
+the chosen value. Alot of stuff can happen
+when you have duplicated and re-ordered
+messages coming in that you have to tolerate.
 
 In short, the register itself is write-once,
 and doesn't change once established. At 

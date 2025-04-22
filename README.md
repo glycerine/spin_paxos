@@ -1174,9 +1174,12 @@ he knows better, but you cut him some slack
 because he's talking about his babies (brain children).
 MultiPaxos with its leader lease and Raft with its
 strong leader also commit in one round trip (optimal)
-on the happy path. Anyway. Virtual syncrhony was 
-primarily used over multicast LAN networks.
-Multicast is rarely available to us these days 
+on the happy path. 
+But also, he's not wrong. See the whole discussion
+and mantra above on "state is diffused over a quorum".
+Birman is saying that doesn't have to be the case.
+Anyway. Virtual syncrhony was primarily used 
+over multicast LAN networks. Multicast is rarely available to us these days 
 outside of a co-located NASDAQ feed in New Jersey, and since
 it doesn't share/play nicely with others and needs a
 tightly controlled setup, it is demanding. 
@@ -1184,10 +1187,10 @@ All cloud providers turn it off. All that said,
 FoundationDB is super impressive;
 it is evidence that a non-quorum approach still has legs, even if
 will need some deep understanding and adaptation
-to your network (TCP) circumstances. This is the
+to your network (TCP/QUIC) circumstances. This is the
 kind of distinction that Alex is trying to get
 at, but to fully appreciate it, I readily admit, will need more
-comprehension and reading on my part.
+comprehension/reading on my part.
 
 In an amusing reversal on intent, Alex gives the above
 Venn diagram to suggest that Raft is a good

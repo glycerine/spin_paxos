@@ -728,8 +728,8 @@ We must get a quorum of acceptors to write the
 same value to stable disk. Once written, that value will
 never change in future ballots (for a single
 instance of Paxos), even if we over-write
-it multiple times through the Paxos state
-machine. A quorum of accepted values on disk
+it multiple times through the Paxos algorithm.
+A quorum of accepted values on disk
 means the value is chosen. Once chosen, 
 the value is idempotent to higher future 
 Paxos ballots. Lower ones

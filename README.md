@@ -1028,6 +1028,26 @@ to have the one server bug/fix needed.
 The log cabin example code also does the joint consensus,
 according to the dissertation section 4.3.
 
+Also useful discussion of how to implement the
+leaders first no-op commit properly, and to not
+read the commit index before that no-op entry
+has commited. Quoting Diego Ongaro in
+
+https://groups.google.com/g/raft-dev/c/4QlyV0aptEQ
+
+> You've linked to where hashicorp/raft appends a 
+> no-op entry when a server becomes leader.
+> The leader's commit index is not up-to-date 
+> until that entry has been committed.
+> Is there anything preventing rqlite from reading 
+> the commit index before that no-op entry has committed?
+
+To which Philip O'Toole replies that Hashicorp's Raft
+code is probably wrong...
+
+> Nope, I don't think so. Hmmmm, not good. I'm not 
+> even sure the Hashicorp library makes this easy to do.
+
 ![rafting.png](rafting.png)
 Image caption: White water rafting with an even number is
 especially dangerous, since split votes are common. We

@@ -1160,7 +1160,7 @@ The essential difference is that they don't use
 majorities (quorums) and will fail an operation even
 even one member goes down. Let's leave that topic
 for another day for now. It is a whole other paradigm really.
-It needs a good failure detector beyond
+It needs a good, eager failure detector beyond
 mere time-outs (Telegraf from TimescaleDB?). 
 This is what Alex is getting at
 when he mentions "gray failures" are the added challenge

@@ -235,6 +235,16 @@ inconsistent values, and that is a
 real risk in partition (partial network
 failure) if there is symmetry on each
 side of the partition.
+(A nice introduction that sets the stage,
+as it were, from the 1960s and 1970s, motivating
+majority/quorum vote as a cheap solution to partition is this
+MIT lecture on Raft; the lecturer points
+out that another, vastly more expensive solution,
+is to simply buy/build a network that cannot fail
+https://www.youtube.com/watch?v=64Zp3tzNbpE 
+which is kind of like the network between your
+CPU and DRAM on a laptop. If the network goes
+down alongside all the nodes, you don't bother with quorums).
 
 Second hint: this is kind of an
 open secret about single-decree Paxos. It

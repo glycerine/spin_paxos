@@ -247,8 +247,11 @@ that in mind: there are "obvious" optimizations
 that would translate the diffuse state into
 local state in single-decree Paxos, and you might
 blithely assume that, of course, this is already
-done, but beware: it is not. In single decree
-Paxos, state is diffused over a quorum. 
+done, but beware: it is not. Again, this is
+an algorithm designed by a very
+clever mathematician in the 1980s, with apparently little
+little regard for modern software engineering 
+practices.
 
 Here is an example that shows how a read from a 
 single replica node is insufficient. Suppose one node

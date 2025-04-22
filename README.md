@@ -1164,12 +1164,12 @@ a decade ago on it here
 https://github.com/glycerine/spread-src-4.4.0
 These were primarily used over multicast LAN networks.
 Multicast is rarely available to us these days since
-it does share/play nicely with others and needs a
+it doesn't share/play nicely with others and needs a
 tightly controlled setup. All cloud providers turn
 it off. Anyway. FoundationDB is super impressive,
-and still shows that the approach has legs, even if
+and shows that the approach still has legs, even if
 will need some deep understanding and adaptation
-to your network circumstances. But I digress.
+to your network (TCP) circumstances. But I digress.
 
 In an amusing reversal on intent, Alex gives the above
 Venn diagram to suggest that Raft is a good

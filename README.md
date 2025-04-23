@@ -1084,8 +1084,8 @@ body of work.
 On Raft
 -------
 
-After you understand Paxos, you'll probably view
-Raft as just another Paxos algorithm variant, albeit one
+After you understand Paxos, you might start by 
+thinking that Raft as just another Paxos algorithm variant, albeit one
 tightly specified, leaving little room
 for ambiguity or discretion in implementation.
 Given how much wiggle room there is for 
@@ -1100,6 +1100,53 @@ correct was a massive boon to the software engineering
 community. For more on this thesis and a deep comparison
 of Paxos and Raft, see https://arxiv.org/abs/2004.05074 
 "Paxos vs Raft", by Heidi Howard and Richard Mortier, 2020.
+
+But in my view, having studied Raft more now,
+it is actually a different algorithm.
+
+The leader election process is not _just_ 
+the equivalent of getting a leader and lease
+in Paxos. In Raft, it also incorporates parts of
+the phase 2b quorum/learner quorum check.
+At first that second quorum appears to be
+totally missing, but it is incorporated into
+the rules for leader election and the
+persisted state after recovery -- and with
+the (lately discovered) need to have any
+new leader get at least a no-op command
+committed through the Raft algorithm all
+the way through _in their current term_, i.e.
+without failing part way through. In 
+effect, learning a quorum of stable,
+replicated values (commands) on disk in 
+Raft requires that action on recovery.
+That first commit in the same term 
+is a critical piece, that and the 
+leader rules that forbid some less
+up to date logs from ever becoming leader.
+
+So Raft is really a different beast.
+It is "not just" Paxos re-packaged.
+
+Update: Also, despite what I wrote below
+about Raft having a sane reconfiguration
+process (which it does), that part
+_has not been proven correct_! Arg.
+The UW Verdi team proved the core
+algorithm was safe, in a machine
+checked formal algorithm, but they
+omitted the reconfiguration parts
+all together. Ongaro says on the 
+raft-dev mailing list that it has
+not been proven (the only counter-
+examples so far have been the bug discussed
+below -- and above about issuing and
+then getting a majority to commit
+a no-op command as the new leaders
+very first action the leader does
+before it can service any clients.
+
+Back to the original thread:
 
 As a counter-point though, "Enough with all the Raft", 
 https://transactional.blog/talk/enough-with-all-the-raft

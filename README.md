@@ -1146,6 +1146,40 @@ a no-op command as the new leaders
 very first action the leader does
 before it can service any clients.
 
+Reference:
+https://groups.google.com/g/raft-dev/c/t4xj6dJTP6E/m/sTTYPO15BwAJ
+> "bug in single-server membership changes"
+> 2015 July 10 Diego Ongaro on raft-dev list
+> ...
+> Safety argument:
+> 
+> We don't yet have a formal safety proof for the 
+> correctness of membership changes (of either type) 
+> in Raft. I've made an attempt at a safety argument 
+> for why the proposed solution works, but it's a little ugly.
+> 
+> It extends the safety argument in the paper/dissertation. 
+> The only part that's different (as far as I can tell) 
+> for membership changes is Step 2, which claims 
+> the existence of "the voter". The voter is the 
+> server that is part of the quorum that commits the 
+> entry in term T and the quorum that votes for the 
+> leader of term U. With a static configuration, 
+> it's easy to see the voter must exist (overlap of 
+> two majorities of the same set). With membership 
+> changes, it's more difficult; this aims to show it 
+> for the dissertation algorithm patched 
+> with the solution proposed above.
+> 
+> Those interested can find the safety argument here:
+https://gist.github.com/ongardie/a11f32b70581e20d6bcd
+(and backup:
+https://gist.github.com/glycerine/d16ec526ae192714d34dbe389887988c )
+> I don't have any current plans to flesh this out 
+> into a full proof, but I'd be happy to discuss merits 
+> of the argument and ways to simplify it.
+
+
 Back to the original thread:
 
 As a counter-point though, "Enough with all the Raft", 

@@ -1179,6 +1179,14 @@ https://gist.github.com/glycerine/d16ec526ae192714d34dbe389887988c )
 > into a full proof, but I'd be happy to discuss merits 
 > of the argument and ways to simplify it.
 
+And Li Xiang pointers to etcd/cockroachdb's variant
+approach to membership change
+https://github.com/etcd-io/etcd/issues/2397#issuecomment-76497331
+https://github.com/coreos/etcd/blob/master/raft/doc.go#L127-L150
+https://github.com/cockroachdb/cockroach/issues/2067
+https://github.com/cockroachdb/cockroach/issues/12768
+https://github.com/etcd-io/etcd/issues/7625
+
 
 Back to the original thread:
 

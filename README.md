@@ -154,7 +154,7 @@ or lock-in, only a single value. Never two
 different values that change after being
 read, or depending on when we read it. If
 we don't get nil, we can cache the value
-safetly, since it won't change. After getting
+safely, since it won't change. After getting
 the non-nil value, we know
 the value is truly and forever locked-in and will not change.
 Never, ever. Okay wait, a small subtlety: the same value might get 

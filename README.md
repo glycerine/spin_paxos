@@ -430,7 +430,80 @@ in the picture.
 Some good introductions to Paxos
 --------------------------------
 
-0. [Lampson 1996 local copy](lampson_1996_how_to_build_ha_consensus.pdf)
+0. Leslie Lamport's "Time, Clocks and the Ordering of Events in a Distributed System"
+Communications of the ACM 21, 7   (July 1978), 558-565.
+https://lamport.azurewebsites.net/pubs/pubs.html#time-clocks
+
+This may seem strange. Start learing Paxos with 
+a paper that isn't about Paxos? Believe me, yes. Absolutely. This is
+Lamport's most highly cited paper. It has won numerous
+awards. Once I read it (it was written a decade
+before Paxos), it made everything about the
+Paxos mechanics make sense: ballot numbers are
+just logical clocks, after all!
+
+The paper is highly readable. Doing so will give
+you a deep understanding of why Paxos is designed
+as it is. Do youself a favor and start here.
+
+The short form summary is this: a causal ordering
+of events between servers can be captured by
+using logical clocks. These are simply integer
+counters on each cluster node that are advanced
+by one for each event, and by more sometimes
+when you get a message: they advance
+to be just ahead of the sender's logical clock when you
+get a message from them. The sender puts their
+current logical clock on the message. The receiver
+does this:
+
+currentLC = max(currentLC, message.senderLC + 1)
+
+This defines a "happened before" relationship
+that lets you reason about possible causality between
+events the past and in the future (wow!)
+
+This simple monotonic counting mechanism
+underlies everything else in Paxos and Raft.
+Ballots in Paxos, Leader terms in Raft. Same
+thing. They are just logical clocks.
+
+Really though? Why do logical clocks matter? 
+
+They give you monotonic, global, total order on all the
+events across your distributed nodes. This
+is powerful.
+
+Once that order is established (and it takes two
+round trips of communication to do so), then
+you can safely commit to that order and 
+write the value that is just a little back in the past;
+safely knowing that you have "the most recent
+and up to date" value (command) to be applied
+to disk (to "the state machine").
+
+Lamport gives a very nice example of a
+distributed locking algorithm for shared
+printer access. Once you've seen this
+concrete example of how the replicated state machine
+works (without any centralized leader! and
+still with first-come, first-served!);
+with the simplest possible state space 
+(who has the printer?)
+and simplest possible commands (reserve the printer for me! 
+okay I'm done with it!)
+then you'll see Paxos as just the 
+fault-tolerant version of the above (based on the
+mathematical observation that two sequential majorities
+must overlap by at least one node that has
+survived through both).
+
+"Time, Clocks and the Ordering of Events in a Distributed System":
+it is easily the most import paper to read first.
+And, its a great read, with excellent diagrams
+that capture the logical clock idea.
+
+0.5 [Lampson 1996 local copy](lampson_1996_how_to_build_ha_consensus.pdf)
 
 https://www.microsoft.com/en-us/research/wp-content/uploads/1996/10/Acrobat-58-Copy.pdf
 

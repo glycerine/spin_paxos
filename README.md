@@ -1157,30 +1157,76 @@ body of work.
 On Raft
 -------
 
-After you understand Paxos, you might start by 
-thinking that Raft as just another Paxos algorithm variant, albeit one
-tightly specified, leaving little room
+After you understand single decree-Paxos, 
+you'll think, okay, what about Multi-Paxos
+(sometime shortened to just Paxos, to
+the bewilderment of many).
+
+Well there's the rub. Multi-Paxos is
+not really a single thing. Like
+state is diffused over a quorum (our mantra),
+Multi-Paxos's definition is diffused
+over alot of papers and posts. What is
+worse is that there is no consensus
+on what constitutes Multi-Paxos.
+Lamports sketch of the idea was that
+sketchy; and the optimizations described
+in The Part-Time Parliament were too
+opaque to write code from.
+
+Raft to the rescue
+
+Raft was a brilliant stroke, and sorely needed,
+that changed all this, bringing Multi-Paxos
+to the masses. 
+
+Raft is Multi-Paxos tightly specified, leaving little room
 for ambiguity or discretion in implementation.
+It focuses on the issues that matter for a
+real implementation that needs to write
+more than one value.
+
 Given how much wiggle room there is for 
 variations and optimizations (instrinsic, of course
 to the algorithm being fault tolerant is that
 it is also very change tolerant; that is,
-until it isn't!), Raft was a brilliant
-stroke, and sorely needed. Locking 
-down an exact algorithm with a precise set 
+until it isn't!), Raft is terrific at
+establishing a very well specified way
+of doing things, and doing those things
+in a way that makes sense. You can reason
+about changes using the Raft invariants.
+As John Ousterhoust said, the Raft
+dissertation is probably the most read
+Ph.D. dissertation in the world.
+
+(A nice watch is "The story of Raft", a 2021 keynote talk by John Ousterhout
+https://www.youtube.com/watch?v=PfE8P4nwcY4 )
+
+
+Locking down an exact Multi-Paxos algorithm with a precise set 
 of choices that could eventually be proven
 correct was a massive boon to the software engineering
 community. For more on this thesis and a deep comparison
 of Paxos and Raft, see https://arxiv.org/abs/2004.05074 
 "Paxos vs Raft", by Heidi Howard and Richard Mortier, 2020.
 
-But in my view, having studied Raft more now,
-it is actually a different algorithm.
+Comments on Raft
 
-The leader election process is not _just_ 
+Its worth realizing that in Raft the "phases" of 
+Paxos have been re-numbered, and in some
+cases merged together. This cleverness
+gives us an efficient and clear algorithm design
+for a protocol that is notorously hard
+to implement. Its still not a small thing;
+expect it to take a couple of weeks to
+implement if you don't use an off-the-shelf
+version.
+
+In Raft, the leader election process is not _just_ 
 the equivalent of getting a leader and lease
-in Paxos. In Raft, it also incorporates parts of
+in Multi-Paxos. In Raft, it also incorporates parts of
 the phase 2b quorum/learner quorum check.
+
 At first that second quorum appears to be
 totally missing, but it is incorporated into
 the rules for leader election and the
@@ -1197,9 +1243,6 @@ That first commit in the same term
 is a critical piece, that and the 
 leader rules that forbid some less
 up to date logs from ever becoming leader.
-
-So Raft is really a different beast.
-It is "not just" Paxos re-packaged.
 
 Update: Also, despite what I wrote below
 about Raft having a sane reconfiguration
@@ -1268,15 +1311,28 @@ https://transactional.blog/talk/enough-with-all-the-raft
 is a great, recent, 10 minute talk from Alex Miller (Google, FoundationDB)
 that got me thinking about Raft versus other
 Paxos configurations. He makes a reasonable case 
-that Raft is often a mediocre,
-but safe, choice; if you understand your problem
+that Raft's approachability and well spelled
+out implementation formula has overshadowed
+non-quorum alternatives like Reconfiguration
+based replication (think Virtual Synchrony).
+He argues if you understand your problem
 space and the trade-offs involved, you can
 make better choices when they are available.
+It's always a fair point. I'd respond 
+though that Raft's popularity means it has
+had much more in the way of safety proving
+done for it (Verdi), and even some new
+cluster reconfig results recently that
+keep building its momentem. See
+
+"ReCraft: Self-Contained Split, Merge, and Membership Change of Raft Protocol"
+https://arxiv.org/abs/2504.14802
+28 Apr 2025 by Kezhi Xiong, Soonwon Moon, Joshua Kang, Bryant Curto, Jieung Kim, Ji-Yong Shin. https://arxiv.org/pdf/2504.14802 
 
 Alex's recommendation of CAS-Paxos as a good "weekend project"
-place to start is one I'm repeating here.
+place to start on consensus is one worth repeating.
 
-That said, having now read the alot of the
+Having now read the alot of the
 literature on Paxos based reconfiguration, and
 compared it to the Raft paper's approach,
 I would have to say this to try and persuade

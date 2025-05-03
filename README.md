@@ -508,7 +508,7 @@ that capture the logical clock idea.
 https://www.microsoft.com/en-us/research/wp-content/uploads/1996/10/Acrobat-58-Copy.pdf
 
 Butler Lampson's 1996 paper, "How to Build a Highly Available System
-Using Consensus", is by far and away the best
+Using Consensus", is by far and away the next best
 paper to read to understand Paxos. It gives both the
 practical side and the theory side in easily digestible
 steps. The big bonus of learning the theory is that 

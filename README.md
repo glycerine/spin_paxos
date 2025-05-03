@@ -1333,6 +1333,15 @@ formally model checked, yay!) See
 https://arxiv.org/abs/2504.14802
 28 Apr 2025 by Kezhi Xiong, Soonwon Moon, Joshua Kang, Bryant Curto, Jieung Kim, Ji-Yong Shin. https://arxiv.org/pdf/2504.14802 
 
+-- which is based on this earlier paper
+
+"Adore: Atomic Distributed Objects with Certified Reconfiguration"
+by Wolf Honoré, Ji-Yong Shin, Jieung Kim, and Zhong Shao. 2022
+in Proceedings of the 43rd ACM SIGPLAN International Conference
+on Programming Language Design and Implementation (PLDI ’22),
+June 13-17, 2022.
+https://dl.acm.org/doi/pdf/10.1145/3519939.3523444
+
 Alex's recommendation of CAS-Paxos as a good "weekend project"
 place to start on consensus is one worth repeating.
 

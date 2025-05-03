@@ -1241,7 +1241,7 @@ replicated values (commands) on disk in
 Raft requires that action on recovery.
 That first commit in the same term 
 is a critical piece, that and the 
-leader rules that forbid some less
+leader rules that forbid any less
 up to date logs from ever becoming leader.
 
 Update: Also, despite what I wrote below
@@ -1252,7 +1252,10 @@ The UW Verdi team proved the core
 algorithm was safe, in a machine
 checked formal algorithm, but they
 omitted the reconfiguration parts
-all together. Ongaro says on the 
+all together. 
+https://github.com/uwplse/verdi
+
+Ongaro says on the 
 raft-dev mailing list that it has
 not been proven (the only counter-
 examples so far have been the bug discussed
@@ -1323,7 +1326,8 @@ though that Raft's popularity means it has
 had much more in the way of safety proving
 done for it (Verdi), and even some new
 cluster reconfig results recently that
-keep building its momentem. See
+keep building its momentem (these _are_
+formally model checked, yay!) See
 
 "ReCraft: Self-Contained Split, Merge, and Membership Change of Raft Protocol"
 https://arxiv.org/abs/2504.14802

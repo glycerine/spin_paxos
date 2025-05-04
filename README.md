@@ -1216,7 +1216,7 @@ establishing a very well specified way
 of doing things, and doing those things
 in a way that makes sense. You can reason
 about changes using the Raft invariants.
-As John Ousterhoust said, the Raft
+As John Ousterhout said in one video, the Raft
 dissertation is probably the most read
 Ph.D. dissertation in the world.
 

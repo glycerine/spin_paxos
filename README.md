@@ -1566,7 +1566,7 @@ We've got to maintain and update membership,
 so delegrating the real work elsewhere just adds
 dependencies and to my thinking, is a cheap ducking
 of responsibility.
-Raft actually has an integrated, sane, proven 
+Raft actually has an integrated, specified
 approach to reconfiguration. Sane reconfig isn't a 
 steady state property, it isn't on the hot 
 data path, but that doesn't make it less 

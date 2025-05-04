@@ -457,7 +457,7 @@ get a message from them. The sender puts their
 current logical clock on the message. The receiver
 does this:
 
-currentLC = max(currentLC, message.senderLC + 1)
+currentLC = max(currentLC + 1, message.senderLC + 1)
 
 This defines a "happened before" relationship
 that lets you reason about possible causality between

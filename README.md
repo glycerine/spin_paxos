@@ -773,6 +773,13 @@ value, the propser must SUBSTITUTE the returned
 value for this write, in place of the one they originally
 had in mind -- and then still use the original ballot number
 that they had proposed/gotten promises back for.
+
+(The earlier one has a lower logical clock than
+anything now, and back when it was proposed before the crashes
+happened, it was the highest logical clock compared to anyone else's LC.
+Remember the first-started, first served from the shared-printer example
+in the Time-Clocks paper?)
+
 Systems can simply automatically re-try a delayed write
 on the next instance of Paxos, but conceptually
 that gets into multi-Paxos, which is beyond

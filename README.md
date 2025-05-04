@@ -717,8 +717,8 @@ Final note on CAS-Paxos: I would ignore Rystsov's
 group membership change protocol, at least on the first pass. There
 are more scalable approaches than doing membership
 changes one-by-one. In fact, Lamport himself describes 
-an approach for arbitrary membership changes in the second-most 
-important paper in this list (after Lampson), which I describe next
+an approach for arbitrary membership changes in the next most 
+important paper in this list, which I describe next
 
 2. Paxos Made Simple, by Leslie Lamport. 2001.
 

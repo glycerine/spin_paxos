@@ -472,7 +472,10 @@ Really though? Why do logical clocks matter?
 
 They give you monotonic, global, total order on all the
 events across your distributed nodes. This
-is powerful.
+is powerful. Okay, technically they give you
+a partial order, but simply breaking ties by
+lowest/highest server ID immediately turns that into
+a total order.
 
 Once that order is established, then
 you can safely commit to that order and 

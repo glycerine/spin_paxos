@@ -510,10 +510,12 @@ it is easily the most import paper to read first.
 And, its a great read, with excellent diagrams
 that capture how logical clocks work. You
 get the causal "happens before" relationship 
-between any two events if you can trace
-you finger either a) up along a server vertical timeline, or
-b) across any message path between server timelines,
-and compare the two logical clocks on the events.
+between any two events on a path if you can trace
+your finger along a path either a) up a server vertical timeline; or
+b) across any message path between server timelines.
+Simply compare the two logical clocks on the events.
+If A.LC is less than B.LC on the same path, 
+then A happened before B, guaranteed.
 
 0.5 [Lampson 1996 local copy](lampson_1996_how_to_build_ha_consensus.pdf)
 

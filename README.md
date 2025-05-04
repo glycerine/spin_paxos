@@ -434,7 +434,7 @@ Some good introductions to Paxos
 Communications of the ACM 21, 7   (July 1978), 558-565.
 https://lamport.azurewebsites.net/pubs/pubs.html#time-clocks
 
-This may seem strange. Start learing Paxos with 
+This may seem strange. Start learning Paxos with 
 a paper that isn't about Paxos? Believe me, yes. Absolutely. This is
 Lamport's most highly cited paper. It has won numerous
 awards. Once I read it (it was written a decade

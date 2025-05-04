@@ -474,23 +474,27 @@ They give you monotonic, global, total order on all the
 events across your distributed nodes. This
 is powerful.
 
-Once that order is established (and it takes two
-round trips of communication to do so), then
+Once that order is established, then
 you can safely commit to that order and 
-write the value that is just a little back in the past;
-safely knowing that you have "the most recent
-and up to date" value (command) to be applied
-to disk (to "the state machine").
+write a value that is just a little back in the past
+of the logical clock sequence;
+knowing that you have "the earliest
+un-executed" value (command) to be applied
+to the state machine because nobody else
+can possibly propose anything lower in the
+sequence, since their logical clocks 
+(their next sequence numbers) are all higher
+now -- as reported in their messages.
 
 Lamport gives a very nice example of a
 distributed locking algorithm for shared
 printer access. Once you've seen this
 concrete example of how the replicated state machine
-works (without any centralized leader! and
-still with first-come, first-served!);
+works (without any centralized leader(!) and
+still with first-started, first-served (nice!));
 with the simplest possible state space 
 (who has the printer?)
-and simplest possible commands (reserve the printer for me! 
+and simplest possible commands (just two: reserve the printer for me! 
 okay I'm done with it!)
 then you'll see Paxos as just the 
 fault-tolerant version of the above (based on the
@@ -501,14 +505,19 @@ survived through both).
 "Time, Clocks and the Ordering of Events in a Distributed System":
 it is easily the most import paper to read first.
 And, its a great read, with excellent diagrams
-that capture the logical clock idea.
+that capture how logical clocks work. You
+get the causal "happens before" relationship 
+between any two events if you can trace
+you finger either a) up along a server vertical timeline, or
+b) across any message path between server timelines,
+and compare the two logical clocks on the events.
 
 0.5 [Lampson 1996 local copy](lampson_1996_how_to_build_ha_consensus.pdf)
 
 https://www.microsoft.com/en-us/research/wp-content/uploads/1996/10/Acrobat-58-Copy.pdf
 
 Butler Lampson's 1996 paper, "How to Build a Highly Available System
-Using Consensus", is by far and away the next best
+Using Consensus", is the next best
 paper to read to understand Paxos. It gives both the
 practical side and the theory side in easily digestible
 steps. The big bonus of learning the theory is that 

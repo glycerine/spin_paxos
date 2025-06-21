@@ -971,7 +971,7 @@ The egg almost instantaneously creates a
 protection barrier -- not unlike how the earth's
 atmosphere protects it from cosmic rays. The first
 sperm to wiggle through the zona pellucida causes a massive wave
-of calcium release to flash through the plasma of the oocyte,
+of calcium release to flash through the cytoplasm of the oocyte,
 signaling (broadcasting to all receptors) on the entire 
 egg surface that the first sperm has arrived, and 
 inducing depolarization at the zona pellucida 

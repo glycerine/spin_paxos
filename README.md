@@ -1419,7 +1419,8 @@ Raft is the best at re-configuration, in my mind,
 not in small part because it is a stand alone solution. 
 It does not push the problem off to another 
 external (Paxos) service rather than 
-taking responsibility and solving it itself.
+taking responsibility and solving it itself. (I'm 
+referring to Vertical Paxos here).
 
 Notice that the "Reconfiguration based Replication" that
 Alex is talking about is a different use of 
@@ -1448,7 +1449,7 @@ for reconfiguration-based-replication.
 If you are interested, there are some notes I made
 a decade ago on it here
 https://github.com/glycerine/spread-src-4.4.0 with
-the caveat that Birman's critique of quorums
+the caveat that Ken Birman's critique of quorums
 as "always" needing two-phase is a little disingenuous --
 he knows better, but you cut him some slack 
 because he's talking about his babies (brain children).
@@ -1457,12 +1458,15 @@ strong leader also commit in one round trip (optimal)
 on the happy path. 
 (To be fair, at the time, Paxos didn't come with 
 leaders and leases, it was leaderless originally.)
+
 But also, he's not wrong about the local read thing.
 See the whole discussion and mantra above on 
 "state is diffused over a quorum".
+
 Birman is saying that doesn't have to be the case(!)
-With the a different algorithm, you might be able 
+With a different algorithm, you might be able 
 to reliably return local reads without a network quorum check.
+
 This has obvious performance benefits.
 Anyway. Read his history of the field (https://www.cs.cornell.edu/ken/History.pdf)
 for more context (its a great read). Virtual synchrony was primarily used 
@@ -1490,7 +1494,8 @@ an external configuration service. Everything
 is going to contend on the state of the larger
 cluster's configuration, so livelocking on that would be bad.
 
-Note that a limitation is that the Raft protocol
+Note that a limitation is that the Raft (original protocol(s)
+as described in the dissertation)
 only allows the addition of a single node
 at a time to its own state machine (as opposed
 to the cluster that Raft is managing the state
@@ -1556,6 +1561,10 @@ code is probably wrong...
 
 > Nope, I don't think so. Hmmmm, not good. I'm not 
 > even sure the Hashicorp library makes this easy to do.
+
+So: both etcd and hashicorp Raft are problematic. So
+if we want a solid Raft library, we'll have to write
+it ourselves.
 
 ![rafting.png](rafting.png)
 Image caption: White water rafting with an even number is

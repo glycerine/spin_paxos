@@ -200,7 +200,7 @@ remaining live nodes might well "come to consensus" or
 anymore. This does not matter/is not in scope.
 (But it does make this a case of wondering:
 are you sure this is the correct problem to be solving?) 
-That's is outside the scope of the challenge
+That's outside the scope of the challenge
 that Paxos addresses. The consensus problem
 wants a fault-tolerant (a minority of 
 cluster nodes can die), write-once register,

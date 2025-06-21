@@ -1347,7 +1347,7 @@ though that Raft's popularity means it has
 had much more in the way of safety proving
 done for it (Verdi), and even some new
 cluster reconfig results recently that
-keep building its momentem (these _are_
+keep building its momentum (these _are_
 formally model checked, yay!) See
 
 "ReCraft: Self-Contained Split, Merge, and Membership Change of Raft Protocol"

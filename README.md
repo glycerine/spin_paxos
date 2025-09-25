@@ -291,7 +291,7 @@ value ever reaches consensus, even with all nodes
 acting locally on only their local information. The
 safety/correctness "emerges" from their joint
 actions, even though it is not obvious immediately, locally,
-when that has happened. From the "god's eye" view
+when that has happened. From a "bird's eye omniscient" view
 of looking at all three machines in an example cluster,
 when we see a quorum of two acceptors persist the
 same accepted state to disk successfully, we 
@@ -714,11 +714,14 @@ need the complexity of leases.
 > method of approaching the leader election process.
 
 Final note on CAS-Paxos: I would ignore Rystsov's 
-group membership change protocol, at least on the first pass. There
-are more scalable approaches than doing membership
-changes one-by-one. In fact, Lamport himself describes 
-an approach for arbitrary membership changes in the next most 
-important paper in this list, which I describe next
+group membership change protocol, at least on the first pass. 
+It seems overly complicated compared to 
+the RaftMongoReconfig paper and its associated
+formal safety proof, which is what I ended
+up implementing for Raft.
+
+Lamport's second attempt at explaining Paxos is
+my next recommendation. 
 
 2. Paxos Made Simple, by Leslie Lamport. 2001.
 

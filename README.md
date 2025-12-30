@@ -403,7 +403,7 @@ How can the leader know that the diffused state
 has been correctly cached locally? If it has an
 unexpired lease from a quorum of nodes, that
 is their guarantee to not participate in any
-quroums other than those proposed by the leader,
+quorums other than those proposed by the leader,
 during the lease time. They must be actively
 ignoring/rejecting other leaders during the lease time.
 No node must ever think they have an overlapping lease, because

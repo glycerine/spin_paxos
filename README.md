@@ -1242,8 +1242,8 @@ cases merged together. This cleverness
 gives us an efficient and clear algorithm design
 for a protocol that is notorously hard
 to implement. Its still not a small thing;
-expect it to take a couple of weeks to
-implement if you don't use an off-the-shelf
+expect it to take on the order of a year to
+implement it well if you don't use an off-the-shelf
 version.
 
 In Raft, the leader election process is not _just_ 
